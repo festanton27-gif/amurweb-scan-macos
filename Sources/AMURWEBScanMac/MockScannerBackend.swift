@@ -11,8 +11,22 @@ final class MockScannerBackend: ScannerBackend {
     func listDevices() async throws -> [ScannerDevice] {
         try await Task.sleep(nanoseconds: 120_000_000)
         return [
-            ScannerDevice(id: "mock-flatbed", name: "AMURWEB Virtual Scanner", isMock: true),
-            ScannerDevice(id: "mock-adf", name: "AMURWEB Virtual ADF", isMock: true)
+            ScannerDevice(
+                id: "mock-flatbed",
+                name: "AMURWEB Virtual Scanner",
+                isMock: true,
+                supportedSources: [.automatic, .flatbed],
+                reportedResolutions: [150, 200, 300, 600],
+                supportsDuplex: false
+            ),
+            ScannerDevice(
+                id: "mock-adf",
+                name: "AMURWEB Virtual ADF",
+                isMock: true,
+                supportedSources: [.automatic, .documentFeeder],
+                reportedResolutions: [150, 200, 300, 600],
+                supportsDuplex: true
+            )
         ]
     }
 
