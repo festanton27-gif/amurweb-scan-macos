@@ -78,19 +78,29 @@ final class ScanViewModel: ObservableObject {
         }
 
         do {
-            let request = ScanRequest(
-                device: device,
-                dpi: settings.selectedDPI,
-                colorMode: settings.colorMode,
-                format: settings.format,
-                source: settings.scanSource,
-                duplexEnabled: settings.duplexEnabled,
-                outputFolder: folder,
-                language: settings.language
-            )
-            let result = try await backend.scan(request)
-            lastOutputURLs = result.fileURLs
-            previewURL = result.fileURLs.first
+            if settings.manualMultiPagePDF,
+               settings.format == .pdf,
+               settings.scanSource != .documentFeeder {
+                try await scanManualMultiPagePDF(
+                    device: device,
+                    outputFolder: folder,
+                    settings: settings
+                )
+            } else {
+                let request = ScanRequest(
+                    device: device,
+                    dpi: settings.selectedDPI,
+                    colorMode: settings.colorMode,
+                    format: settings.format,
+                    source: settings.scanSource,
+                    duplexEnabled: settings.duplexEnabled,
+                    outputFolder: folder,
+                    language: settings.language
+                )
+                let result = try await backend.scan(request)
+                lastOutputURLs = result.fileURLs
+                previewURL = result.fileURLs.first
+            }
             statusKey = "status.saved"
         } catch ScannerBackendError.cancelled {
             errorMessage = nil
@@ -101,6 +111,85 @@ final class ScanViewModel: ObservableObject {
         } catch {
             errorMessage = friendlyError(error, language: settings.language)
             statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
+        }
+    }
+
+    private func scanManualMultiPagePDF(
+        device: ScannerDevice,
+        outputFolder: URL,
+        settings: AppSettings
+    ) async throws {
+        let sessionFolder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("amurweb-scan-manual-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: sessionFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: sessionFolder) }
+
+        var pageFiles: [URL] = []
+        let manualSource: ScanSource =
+            settings.scanSource == .automatic && device.supportedSources.contains(.flatbed)
+            ? .flatbed
+            : settings.scanSource
+
+        while true {
+            let request = ScanRequest(
+                device: device,
+                dpi: settings.selectedDPI,
+                colorMode: settings.colorMode,
+                format: .png,
+                source: manualSource,
+                duplexEnabled: false,
+                outputFolder: sessionFolder,
+                language: settings.language
+            )
+
+            let result = try await backend.scan(request)
+            guard !result.fileURLs.isEmpty else {
+                throw ScannerBackendError.scanFailed("The scanner returned no page for the manual multi-page document.")
+            }
+            pageFiles.append(contentsOf: result.fileURLs)
+
+            switch nextPageDecision(pageCount: pageFiles.count, settings: settings) {
+            case .scanNext:
+                statusKey = "status.scanning"
+                continue
+            case .finish:
+                let outputURL = namer.nextFileURL(
+                    in: outputFolder,
+                    format: .pdf,
+                    language: settings.language
+                )
+                try ImageOutputWriter.convert(sourceURLs: pageFiles, to: outputURL, format: .pdf)
+                lastOutputURLs = [outputURL]
+                previewURL = outputURL
+                return
+            case .cancel:
+                throw ScannerBackendError.cancelled
+            }
+        }
+    }
+
+    private enum ManualPageDecision {
+        case scanNext
+        case finish
+        case cancel
+    }
+
+    private func nextPageDecision(pageCount: Int, settings: AppSettings) -> ManualPageDecision {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = String(format: settings.t("multipage.pageScanned"), pageCount)
+        alert.informativeText = settings.t("multipage.nextPrompt")
+        alert.addButton(withTitle: settings.t("multipage.next"))
+        alert.addButton(withTitle: settings.t("multipage.finish"))
+        alert.addButton(withTitle: settings.t("cancel"))
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return .scanNext
+        case .alertSecondButtonReturn:
+            return .finish
+        default:
+            return .cancel
         }
     }
 
