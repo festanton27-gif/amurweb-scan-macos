@@ -17,6 +17,7 @@ struct ContentView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .task {
             await model.refresh(settings: settings)
+            normalizeSettingsForSelectedDevice()
         }
         .alert(settings.t("error"), isPresented: Binding(
             get: { model.errorMessage != nil },
@@ -42,6 +43,7 @@ struct ContentView: View {
                             model.selectedDeviceID = $0
                             settings.lastScannerID = $0
                             model.statusKey = model.selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
+                            normalizeSettingsForSelectedDevice()
                         }
                     )) {
                         ForEach(model.devices) { device in
@@ -52,23 +54,23 @@ struct ContentView: View {
 
                     fieldLabel(settings.t("source"))
                     Picker("", selection: $settings.scanSource) {
-                        Text(settings.t("source.auto")).tag(ScanSource.automatic)
-                        Text(settings.t("source.flatbed")).tag(ScanSource.flatbed)
-                        Text(settings.t("source.adf")).tag(ScanSource.documentFeeder)
+                        ForEach(availableSources) { source in
+                            Text(sourceTitle(source)).tag(source)
+                        }
                     }
                     .labelsHidden()
                     .onChange(of: settings.scanSource) { source in
-                        if source == .flatbed {
+                        if source != .documentFeeder || model.selectedDevice?.supportsDuplex == false {
                             settings.duplexEnabled = false
                         }
                     }
 
                     Toggle(settings.t("duplex"), isOn: $settings.duplexEnabled)
-                        .disabled(settings.scanSource == .flatbed)
+                        .disabled(settings.scanSource != .documentFeeder || model.selectedDevice?.supportsDuplex == false)
 
                     fieldLabel(settings.t("resolution"))
                     Picker("", selection: $settings.selectedDPI) {
-                        ForEach([150, 200, 300, 600], id: \.self) { dpi in
+                        ForEach(availableDPIChoices, id: \.self) { dpi in
                             Text("\(dpi) DPI").tag(dpi)
                         }
                     }
@@ -92,6 +94,7 @@ struct ContentView: View {
                 }
                 .padding(4)
             }
+            .disabled(model.isBusy)
 
             GroupBox {
                 VStack(alignment: .leading, spacing: 9) {
@@ -110,6 +113,7 @@ struct ContentView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Color.orange)
+                    .disabled(model.isBusy)
 
                     Button {
                         model.openOutputFolder(settings: settings)
@@ -130,20 +134,35 @@ struct ContentView: View {
                 .padding(4)
             }
 
-            Button {
-                Task { await model.scan(settings: settings) }
-            } label: {
-                HStack {
-                    if model.isBusy { ProgressView().controlSize(.small) }
-                    Image(systemName: "scanner")
-                    Text(settings.t("scan"))
-                        .font(.system(size: 17, weight: .bold))
+            if model.isBusy {
+                Button(role: .destructive) {
+                    model.cancelScan()
+                } label: {
+                    HStack {
+                        if model.isCancelling { ProgressView().controlSize(.small) }
+                        Image(systemName: "xmark.circle")
+                        Text(settings.t("cancel"))
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 42)
                 }
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .buttonStyle(.bordered)
+                .disabled(model.isCancelling)
+            } else {
+                Button {
+                    Task { await model.scan(settings: settings) }
+                } label: {
+                    HStack {
+                        Image(systemName: "scanner")
+                        Text(settings.t("scan"))
+                            .font(.system(size: 17, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.orange)
+                .disabled(model.selectedDevice == nil)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.orange)
-            .disabled(model.isBusy || model.selectedDevice == nil)
 
             Spacer(minLength: 0)
 
@@ -159,6 +178,49 @@ struct ContentView: View {
         }
         .padding(18)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
+    }
+
+    private var availableSources: [ScanSource] {
+        guard let device = model.selectedDevice else { return [.automatic] }
+        let ordered: [ScanSource] = [.automatic, .flatbed, .documentFeeder]
+        let filtered = ordered.filter { device.supportedSources.contains($0) }
+        return filtered.isEmpty ? [.automatic] : filtered
+    }
+
+    private var availableDPIChoices: [Int] {
+        let defaults = [150, 200, 300, 600]
+        guard let device = model.selectedDevice, !device.reportedResolutions.isEmpty else {
+            return defaults
+        }
+        let filtered = defaults.filter { device.reportedResolutions.contains($0) }
+        return filtered.isEmpty ? defaults : filtered
+    }
+
+    private func sourceTitle(_ source: ScanSource) -> String {
+        switch source {
+        case .automatic: return settings.t("source.auto")
+        case .flatbed: return settings.t("source.flatbed")
+        case .documentFeeder: return settings.t("source.adf")
+        }
+    }
+
+    private func normalizeSettingsForSelectedDevice() {
+        guard let device = model.selectedDevice else { return }
+
+        if !device.supportedSources.contains(settings.scanSource) {
+            settings.scanSource = device.supportedSources.contains(.automatic) ? .automatic : (device.supportedSources.first ?? .automatic)
+        }
+
+        let dpiChoices = availableDPIChoices
+        if !dpiChoices.contains(settings.selectedDPI), let nearest = dpiChoices.min(by: {
+            abs($0 - settings.selectedDPI) < abs($1 - settings.selectedDPI)
+        }) {
+            settings.selectedDPI = nearest
+        }
+
+        if settings.scanSource != .documentFeeder || device.supportsDuplex == false {
+            settings.duplexEnabled = false
+        }
     }
 
     private var header: some View {
@@ -232,7 +294,10 @@ struct ContentView: View {
                 }
                 Spacer()
                 Button(settings.t("refresh")) {
-                    Task { await model.refresh(settings: settings) }
+                    Task {
+                        await model.refresh(settings: settings)
+                        normalizeSettingsForSelectedDevice()
+                    }
                 }
                 .disabled(model.isBusy)
             }

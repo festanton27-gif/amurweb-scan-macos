@@ -34,11 +34,24 @@ public struct ScannerDevice: Identifiable, Hashable, Sendable {
     public let id: String
     public let name: String
     public let isMock: Bool
+    public let supportedSources: [ScanSource]
+    public let reportedResolutions: [Int]
+    public let supportsDuplex: Bool?
 
-    public init(id: String, name: String, isMock: Bool = false) {
+    public init(
+        id: String,
+        name: String,
+        isMock: Bool = false,
+        supportedSources: [ScanSource] = [.automatic, .flatbed, .documentFeeder],
+        reportedResolutions: [Int] = [150, 200, 300, 600],
+        supportsDuplex: Bool? = nil
+    ) {
         self.id = id
         self.name = name
         self.isMock = isMock
+        self.supportedSources = supportedSources
+        self.reportedResolutions = reportedResolutions
+        self.supportsDuplex = supportsDuplex
     }
 }
 
@@ -94,6 +107,7 @@ public enum ScannerBackendError: LocalizedError, Sendable {
     case noDevice
     case unavailable(String)
     case scanFailed(String)
+    case cancelled
 
     public var errorDescription: String? {
         switch self {
@@ -101,6 +115,8 @@ public enum ScannerBackendError: LocalizedError, Sendable {
             return "Scanner device is not selected."
         case .unavailable(let message), .scanFailed(let message):
             return message
+        case .cancelled:
+            return "Scanning was cancelled."
         }
     }
 }

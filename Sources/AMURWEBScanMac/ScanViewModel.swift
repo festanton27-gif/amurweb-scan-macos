@@ -7,6 +7,7 @@ final class ScanViewModel: ObservableObject {
     @Published var devices: [ScannerDevice] = []
     @Published var selectedDeviceID: String?
     @Published var isBusy = false
+    @Published var isCancelling = false
     @Published var statusKey = "status.mock"
     @Published var previewURL: URL?
     @Published var lastOutputURLs: [URL] = []
@@ -42,7 +43,7 @@ final class ScanViewModel: ObservableObject {
             settings.lastScannerID = selectedDeviceID
             statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = friendlyError(error, language: settings.language)
         }
     }
 
@@ -60,16 +61,21 @@ final class ScanViewModel: ObservableObject {
 
     func scan(settings: AppSettings) async {
         guard let device = selectedDevice else {
-            errorMessage = ScannerBackendError.noDevice.localizedDescription
+            errorMessage = settings.t("error.noDevice")
             return
         }
         guard let folder = settings.outputFolder else {
+            errorMessage = settings.t("error.noFolder")
             return
         }
 
         isBusy = true
+        isCancelling = false
         statusKey = "status.scanning"
-        defer { isBusy = false }
+        defer {
+            isBusy = false
+            isCancelling = false
+        }
 
         do {
             let request = ScanRequest(
@@ -86,10 +92,23 @@ final class ScanViewModel: ObservableObject {
             lastOutputURLs = result.fileURLs
             previewURL = result.fileURLs.first
             statusKey = "status.saved"
+        } catch ScannerBackendError.cancelled {
+            errorMessage = nil
+            statusKey = "status.cancelled"
+        } catch is CancellationError {
+            errorMessage = nil
+            statusKey = "status.cancelled"
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = friendlyError(error, language: settings.language)
             statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
         }
+    }
+
+    func cancelScan() {
+        guard isBusy, !isCancelling else { return }
+        isCancelling = true
+        statusKey = "status.cancelling"
+        backend.cancelScan()
     }
 
     func nextFileName(settings: AppSettings) -> String {
@@ -115,5 +134,25 @@ final class ScanViewModel: ObservableObject {
     func openOutputFolder(settings: AppSettings) {
         guard let folder = settings.outputFolder else { return }
         NSWorkspace.shared.open(folder)
+    }
+
+    private func friendlyError(_ error: Error, language: AppLanguage) -> String {
+        let t: (String) -> String = { L10n.text($0, language: language) }
+
+        if let backendError = error as? ScannerBackendError {
+            switch backendError {
+            case .noDevice:
+                return t("error.noDevice")
+            case .cancelled:
+                return t("status.cancelled")
+            case .unavailable(let detail):
+                return t("error.unsupported") + "\n\n" + detail
+            case .scanFailed(let detail):
+                return t("error.scanFailed") + "\n\n" + detail
+            }
+        }
+
+        let nsError = error as NSError
+        return t("error.scanFailed") + "\n\n" + error.localizedDescription + "\n[\(nsError.domain) · \(nsError.code)]"
     }
 }

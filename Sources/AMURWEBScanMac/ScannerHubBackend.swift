@@ -26,8 +26,13 @@ final class ScannerHubBackend: ScannerBackend {
         return try await hardware.scan(request)
     }
 
+    func cancelScan() {
+        hardware.cancelScan()
+        mock.cancelScan()
+    }
+
     func diagnosticReport() async -> String {
         let hardwareReport = await hardware.diagnosticReport()
-        return hardwareReport + "\n\nMock Scanner\nVirtual flatbed: available\nVirtual ADF: available\nVirtual ADF pages: 3 simplex / 4 duplex\nJPG/PNG/PDF: enabled"
+        return hardwareReport + "\n\nMock Scanner\nVirtual flatbed: available\nVirtual ADF: available\nVirtual ADF pages: 3 simplex / 4 duplex\nJPG/PNG/PDF: enabled\nCancellation: enabled"
     }
 }
