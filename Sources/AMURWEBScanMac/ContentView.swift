@@ -63,6 +63,9 @@ struct ContentView: View {
                         if source != .documentFeeder || model.selectedDevice?.supportsDuplex == false {
                             settings.duplexEnabled = false
                         }
+                        if source == .documentFeeder {
+                            settings.manualMultiPagePDF = false
+                        }
                     }
 
                     Toggle(settings.t("duplex"), isOn: $settings.duplexEnabled)
@@ -91,6 +94,24 @@ struct ContentView: View {
                         Text("PDF").tag(ScanFormat.pdf)
                     }
                     .labelsHidden()
+                    .onChange(of: settings.format) { format in
+                        if format != .pdf {
+                            settings.manualMultiPagePDF = false
+                        }
+                    }
+
+                    Toggle(settings.t("multipage.manual"), isOn: $settings.manualMultiPagePDF)
+                        .disabled(settings.format != .pdf || settings.scanSource == .documentFeeder)
+
+                    if settings.scanSource == .documentFeeder {
+                        Text(settings.t("multipage.adfAuto"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if settings.manualMultiPagePDF {
+                        Text(settings.t("multipage.manualNote"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .padding(4)
             }
@@ -220,6 +241,9 @@ struct ContentView: View {
 
         if settings.scanSource != .documentFeeder || device.supportsDuplex == false {
             settings.duplexEnabled = false
+        }
+        if settings.scanSource == .documentFeeder || settings.format != .pdf {
+            settings.manualMultiPagePDF = false
         }
     }
 
