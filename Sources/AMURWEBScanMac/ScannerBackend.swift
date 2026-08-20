@@ -6,4 +6,11 @@ protocol ScannerBackend {
     var backendName: String { get }
     func listDevices() async throws -> [ScannerDevice]
     func scan(_ request: ScanRequest) async throws -> ScanResult
+    func diagnosticReport() async -> String
+}
+
+extension ScannerBackend {
+    func diagnosticReport() async -> String {
+        "Backend: \(backendName)"
+    }
 }
