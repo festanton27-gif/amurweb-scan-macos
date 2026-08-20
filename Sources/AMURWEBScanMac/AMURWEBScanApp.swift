@@ -5,16 +5,23 @@ import AMURWEBScanCore
 struct AMURWEBScanApp: App {
     @StateObject private var settings = AppSettings()
     @StateObject private var model = ScanViewModel()
+    @StateObject private var ecosystem = EcosystemCoordinator()
 
     var body: some Scene {
         WindowGroup("AMURWEB Scan") {
-            ContentView()
+            AppRootView()
                 .environmentObject(settings)
                 .environmentObject(model)
+                .environmentObject(ecosystem)
         }
         .defaultSize(width: 1180, height: 760)
         .commands {
-            AppCommands(settings: settings, model: model)
+            AppCommands(settings: settings, model: model, ecosystem: ecosystem)
+        }
+
+        Settings {
+            SettingsView()
+                .environmentObject(settings)
         }
 
         Window("About AMURWEB Scan", id: "about") {
@@ -44,6 +51,7 @@ struct AMURWEBScanApp: App {
 struct AppCommands: Commands {
     @ObservedObject var settings: AppSettings
     @ObservedObject var model: ScanViewModel
+    @ObservedObject var ecosystem: EcosystemCoordinator
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
@@ -79,6 +87,10 @@ struct AppCommands: Commands {
         }
 
         CommandMenu(settings.t("menu.help")) {
+            Button(settings.t("menu.checkUpdates")) {
+                Task { await ecosystem.checkForUpdates(settings: settings, manual: true) }
+            }
+            Divider()
             Button(settings.t("menu.support")) { openWindow(id: "support") }
             Button(settings.t("menu.diagnostics")) { openWindow(id: "diagnostics") }
             Divider()
