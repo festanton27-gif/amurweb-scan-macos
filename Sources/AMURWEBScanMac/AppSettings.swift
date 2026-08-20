@@ -9,6 +9,7 @@ final class AppSettings: ObservableObject {
     @Published var format: ScanFormat { didSet { defaults.set(format.rawValue, forKey: Keys.format) } }
     @Published var scanSource: ScanSource { didSet { defaults.set(scanSource.rawValue, forKey: Keys.scanSource) } }
     @Published var duplexEnabled: Bool { didSet { defaults.set(duplexEnabled, forKey: Keys.duplex) } }
+    @Published var manualMultiPagePDF: Bool { didSet { defaults.set(manualMultiPagePDF, forKey: Keys.manualMultiPagePDF) } }
     @Published var outputFolder: URL? { didSet { defaults.set(outputFolder?.path, forKey: Keys.folder) } }
     @Published var lastScannerID: String? { didSet { defaults.set(lastScannerID, forKey: Keys.scanner) } }
     @Published var automaticUpdateChecks: Bool { didSet { defaults.set(automaticUpdateChecks, forKey: Keys.automaticUpdateChecks) } }
@@ -22,6 +23,7 @@ final class AppSettings: ObservableObject {
         static let format = "format"
         static let scanSource = "scanSource"
         static let duplex = "duplexEnabled"
+        static let manualMultiPagePDF = "manualMultiPagePDF"
         static let folder = "folder"
         static let scanner = "scanner"
         static let automaticUpdateChecks = "automaticUpdateChecks"
@@ -43,6 +45,7 @@ final class AppSettings: ObservableObject {
         format = ScanFormat(rawValue: defaults.string(forKey: Keys.format) ?? "") ?? .jpg
         scanSource = ScanSource(rawValue: defaults.string(forKey: Keys.scanSource) ?? "") ?? .automatic
         duplexEnabled = defaults.bool(forKey: Keys.duplex)
+        manualMultiPagePDF = defaults.bool(forKey: Keys.manualMultiPagePDF)
 
         if let path = defaults.string(forKey: Keys.folder), FileManager.default.fileExists(atPath: path) {
             outputFolder = URL(fileURLWithPath: path, isDirectory: true)
@@ -51,7 +54,9 @@ final class AppSettings: ObservableObject {
         }
 
         lastScannerID = defaults.string(forKey: Keys.scanner)
-        automaticUpdateChecks = defaults.object(forKey: Keys.automaticUpdateChecks) as? Bool ?? true
+        automaticUpdateChecks = defaults.object(forKey: Keys.automaticUpdateChecks) == nil
+            ? true
+            : defaults.bool(forKey: Keys.automaticUpdateChecks)
     }
 
     func t(_ key: String) -> String {
