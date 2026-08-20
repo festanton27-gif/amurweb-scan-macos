@@ -10,6 +10,8 @@ final class ScanViewModel: ObservableObject {
     @Published var statusKey = "status.mock"
     @Published var previewURL: URL?
     @Published var lastOutputURLs: [URL] = []
+    @Published var diagnosticText = ""
+    @Published var diagnosticsBusy = false
     @Published var errorMessage: String?
 
     private let backend: any ScannerBackend
@@ -42,6 +44,18 @@ final class ScanViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func refreshDiagnostics() async {
+        diagnosticsBusy = true
+        diagnosticText = await backend.diagnosticReport()
+        diagnosticsBusy = false
+    }
+
+    func copyDiagnostics() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(diagnosticText, forType: .string)
     }
 
     func scan(settings: AppSettings) async {
