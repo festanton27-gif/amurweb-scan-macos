@@ -9,11 +9,11 @@ struct ContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             sidebar
-                .frame(width: 350)
+                .frame(width: 370)
             Divider()
             preview
         }
-        .frame(minWidth: 1040, minHeight: 700)
+        .frame(minWidth: 1080, minHeight: 760)
         .background(Color(nsColor: .windowBackgroundColor))
         .task {
             await model.refresh(settings: settings)
@@ -29,12 +29,12 @@ struct ContentView: View {
     }
 
     private var sidebar: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 14) {
             header
             statusBadges
 
             GroupBox {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 11) {
                     fieldLabel(settings.t("scanner"))
                     Picker("", selection: Binding(
                         get: { model.selectedDeviceID ?? "" },
@@ -49,6 +49,22 @@ struct ContentView: View {
                         }
                     }
                     .labelsHidden()
+
+                    fieldLabel(settings.t("source"))
+                    Picker("", selection: $settings.scanSource) {
+                        Text(settings.t("source.auto")).tag(ScanSource.automatic)
+                        Text(settings.t("source.flatbed")).tag(ScanSource.flatbed)
+                        Text(settings.t("source.adf")).tag(ScanSource.documentFeeder)
+                    }
+                    .labelsHidden()
+                    .onChange(of: settings.scanSource) { source in
+                        if source == .flatbed {
+                            settings.duplexEnabled = false
+                        }
+                    }
+
+                    Toggle(settings.t("duplex"), isOn: $settings.duplexEnabled)
+                        .disabled(settings.scanSource == .flatbed)
 
                     fieldLabel(settings.t("resolution"))
                     Picker("", selection: $settings.selectedDPI) {
@@ -78,7 +94,7 @@ struct ContentView: View {
             }
 
             GroupBox {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 9) {
                     fieldLabel(settings.t("folder"))
                     Text(settings.outputFolder?.path ?? "—")
                         .font(.system(size: 12, design: .monospaced))

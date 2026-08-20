@@ -22,6 +22,14 @@ public enum ScanColorMode: String, CaseIterable, Codable, Identifiable, Sendable
     public var id: String { rawValue }
 }
 
+public enum ScanSource: String, CaseIterable, Codable, Identifiable, Sendable {
+    case automatic
+    case flatbed
+    case documentFeeder
+
+    public var id: String { rawValue }
+}
+
 public struct ScannerDevice: Identifiable, Hashable, Sendable {
     public let id: String
     public let name: String
@@ -39,26 +47,46 @@ public struct ScanRequest: Sendable {
     public let dpi: Int
     public let colorMode: ScanColorMode
     public let format: ScanFormat
+    public let source: ScanSource
+    public let duplexEnabled: Bool
     public let outputFolder: URL
     public let language: AppLanguage
 
-    public init(device: ScannerDevice, dpi: Int, colorMode: ScanColorMode, format: ScanFormat, outputFolder: URL, language: AppLanguage) {
+    public init(
+        device: ScannerDevice,
+        dpi: Int,
+        colorMode: ScanColorMode,
+        format: ScanFormat,
+        source: ScanSource = .automatic,
+        duplexEnabled: Bool = false,
+        outputFolder: URL,
+        language: AppLanguage
+    ) {
         self.device = device
         self.dpi = dpi
         self.colorMode = colorMode
         self.format = format
+        self.source = source
+        self.duplexEnabled = duplexEnabled
         self.outputFolder = outputFolder
         self.language = language
     }
 }
 
 public struct ScanResult: Sendable {
-    public let fileURL: URL
+    public let fileURLs: [URL]
     public let deviceName: String
 
-    public init(fileURL: URL, deviceName: String) {
-        self.fileURL = fileURL
+    public var fileURL: URL { fileURLs[0] }
+
+    public init(fileURLs: [URL], deviceName: String) {
+        precondition(!fileURLs.isEmpty, "ScanResult requires at least one output file.")
+        self.fileURLs = fileURLs
         self.deviceName = deviceName
+    }
+
+    public init(fileURL: URL, deviceName: String) {
+        self.init(fileURLs: [fileURL], deviceName: deviceName)
     }
 }
 

@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: macos-alpha-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   arm64:
     name: Apple Silicon
@@ -86,8 +90,8 @@ jobs:
         run: bash scripts/package-universal.sh "$PWD/build/AMURWEBScanMac" "$PWD/dist"
       - uses: actions/upload-artifact@v4
         with:
-          name: AMURWEB-Scan-macOS-0.2.0-Alpha-Universal
+          name: AMURWEB-Scan-macOS-0.3.0-Alpha-Universal
           path: |
-            dist/AMURWEB-Scan-macOS-0.2.0-Alpha-Universal.dmg
+            dist/AMURWEB-Scan-macOS-0.3.0-Alpha-Universal.dmg
             dist/SHA256SUMS.txt
           if-no-files-found: error
