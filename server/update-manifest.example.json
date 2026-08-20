@@ -1,0 +1,10 @@
+{
+  "version": "0.5.1",
+  "pageURL": "https://awc-dv.ru/it-uslugi-i-vozmozhnosti/razrabotka-po/gotovoe-po/programma-dlya-skanera/",
+  "downloadURL": "https://awc-dv.ru/downloads/AMURWEB-Scan-macOS-0.5.1.dmg",
+  "message": {
+    "ru": "Доступна новая версия AMURWEB Scan для macOS.",
+    "en": "A new version of AMURWEB Scan for macOS is available."
+  },
+  "critical": false
+}
