@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 import AMURWEBScanCore
 
 @MainActor
-final class ImageCaptureScannerBackend: NSObject, ScannerBackend, ICDeviceBrowserDelegate, ICScannerDeviceDelegate {
+final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrency ICDeviceBrowserDelegate, @preconcurrency ICScannerDeviceDelegate {
     let backendName = "ImageCaptureCore"
 
     private let browser = ICDeviceBrowser()
@@ -70,7 +70,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, ICDeviceBrowse
             ICDeviceLocationTypeMask.bonjour.rawValue |
             ICDeviceLocationTypeMask.bluetooth.rawValue |
             ICDeviceLocationTypeMask.remote.rawValue
-        browser.browsedDeviceTypeMask = ICDeviceTypeMask(rawValue: rawMask)
+        browser.browsedDeviceTypeMask = ICDeviceTypeMask(rawValue: rawMask) ?? .scanner
         browser.start()
         browserStarted = true
     }
@@ -90,9 +90,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, ICDeviceBrowse
         scanner.documentName = "amurweb-scan-capture-\(UUID().uuidString)"
         scanner.documentUTI = UTType.png.identifier
 
-        guard let unit = scanner.selectedFunctionalUnit else {
-            throw ScannerBackendError.scanFailed("The scanner did not provide a selectable scan unit.")
-        }
+        let unit = scanner.selectedFunctionalUnit
         unit.resolution = bestResolution(request.dpi, supported: unit.supportedResolutions, fallback: unit.resolution)
 
         switch request.colorMode {
