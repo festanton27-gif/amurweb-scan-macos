@@ -125,6 +125,10 @@ final class ScanViewModel: ObservableObject {
         defer { try? FileManager.default.removeItem(at: sessionFolder) }
 
         var pageFiles: [URL] = []
+        let manualSource: ScanSource =
+            settings.scanSource == .automatic && device.supportedSources.contains(.flatbed)
+            ? .flatbed
+            : settings.scanSource
 
         while true {
             let request = ScanRequest(
@@ -132,7 +136,7 @@ final class ScanViewModel: ObservableObject {
                 dpi: settings.selectedDPI,
                 colorMode: settings.colorMode,
                 format: .png,
-                source: settings.scanSource,
+                source: manualSource,
                 duplexEnabled: false,
                 outputFolder: sessionFolder,
                 language: settings.language
