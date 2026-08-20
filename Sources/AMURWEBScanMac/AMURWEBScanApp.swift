@@ -27,6 +27,13 @@ struct AMURWEBScanApp: App {
         }
         .windowResizability(.contentSize)
 
+        Window("Scanner diagnostics", id: "diagnostics") {
+            DiagnosticsView()
+                .environmentObject(settings)
+                .environmentObject(model)
+        }
+        .windowResizability(.contentSize)
+
         Window("Legal information", id: "legal") {
             LegalView().environmentObject(settings)
         }
@@ -63,6 +70,8 @@ struct AppCommands: Commands {
 
         CommandMenu(settings.t("menu.help")) {
             Button(settings.t("menu.support")) { openWindow(id: "support") }
+            Button(settings.t("menu.diagnostics")) { openWindow(id: "diagnostics") }
+            Divider()
             Button(settings.t("menu.legal")) { openWindow(id: "legal") }
         }
     }
