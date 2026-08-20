@@ -14,7 +14,7 @@ final class ScanViewModel: ObservableObject {
     private let backend: any ScannerBackend
     private let namer = ScanFileNamer()
 
-    init(backend: any ScannerBackend = MockScannerBackend()) {
+    init(backend: any ScannerBackend = ScannerHubBackend()) {
         self.backend = backend
     }
 
@@ -33,7 +33,7 @@ final class ScanViewModel: ObservableObject {
                 selectedDeviceID = devices.first?.id
             }
             settings.lastScannerID = selectedDeviceID
-            statusKey = "status.mock"
+            statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
         } catch {
             errorMessage = error.localizedDescription
         }
