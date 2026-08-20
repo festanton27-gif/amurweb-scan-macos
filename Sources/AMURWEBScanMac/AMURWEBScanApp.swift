@@ -56,11 +56,21 @@ struct AppCommands: Commands {
                 Task { await model.scan(settings: settings) }
             }
             .keyboardShortcut("s", modifiers: [.command])
+            .disabled(model.isBusy || model.selectedDevice == nil)
+
+            Button(settings.t("menu.cancel")) {
+                model.cancelScan()
+            }
+            .keyboardShortcut(".", modifiers: [.command])
+            .disabled(!model.isBusy || model.isCancelling)
+
+            Divider()
 
             Button(settings.t("menu.refresh")) {
                 Task { await model.refresh(settings: settings) }
             }
             .keyboardShortcut("r", modifiers: [.command])
+            .disabled(model.isBusy)
         }
 
         CommandMenu(settings.t("menu.language")) {
