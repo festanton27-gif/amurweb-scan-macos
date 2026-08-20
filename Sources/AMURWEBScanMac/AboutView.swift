@@ -21,7 +21,7 @@ struct AboutView: View {
 
             Text("AMURWEB Scan")
                 .font(.title.bold())
-            Text("0.1.0 Alpha · macOS")
+            Text("0.2.0 Alpha · macOS")
                 .foregroundStyle(.secondary)
 
             Text(settings.t("about.description"))
