@@ -25,17 +25,21 @@ public enum L10n {
         "open.folder": "Открыть папку",
         "next.file": "Следующий файл",
         "scan": "СКАНИРОВАТЬ",
+        "cancel": "Отменить сканирование",
         "refresh": "Обновить сканеры",
         "preview": "Предпросмотр",
         "preview.empty.title": "Документ появится здесь",
         "preview.empty.body": "Выберите реальный сканер, найденный через ImageCaptureCore, или виртуальный Mock Scanner для проверки интерфейса, ADF, многостраничного PDF и сохранения без оборудования.",
         "status.ready": "Готово к сканированию",
         "status.scanning": "Сканирование…",
+        "status.cancelling": "Отмена сканирования…",
+        "status.cancelled": "Сканирование отменено",
         "status.saved": "Сохранено",
         "status.mock": "Режим тестирования: Mock Scanner",
         "status.hardware": "Реальный сканер через ImageCaptureCore",
         "menu.scan": "Сканирование",
         "menu.scan.now": "Сканировать сейчас",
+        "menu.cancel": "Отменить сканирование",
         "menu.refresh": "Обновить устройства",
         "menu.language": "Язык",
         "menu.help": "Справка",
@@ -56,8 +60,12 @@ public enum L10n {
         "go": "Перейти",
         "legal.title": "Правовая информация",
         "legal.body": "AMURWEB Scan распространяется бесплатно. Все права на программу, название и визуальные материалы принадлежат Амурскому Веб Центру (АМУРВЕБ). Программа предоставляется «как есть». Совместимость со сканерами зависит от macOS, драйверов и возможностей конкретного устройства. Отсканированные документы обрабатываются и сохраняются локально.",
-        "alpha.notice": "0.3.0 Alpha · ADF, duplex и многостраничный PDF · требуется внешний тест на реальном Mac и сканере",
-        "error": "Ошибка"
+        "alpha.notice": "0.4.0 Alpha · отмена сканирования и улучшенная обработка ошибок · требуется внешний тест на реальном Mac и сканере",
+        "error": "Ошибка",
+        "error.noDevice": "Сканер не выбран. Обновите список устройств и выберите сканер.",
+        "error.noFolder": "Не выбрана папка для сохранения. Укажите папку в Finder.",
+        "error.unsupported": "Выбранная функция не поддерживается этим сканером.",
+        "error.scanFailed": "Не удалось выполнить сканирование. Проверьте подключение сканера и его состояние."
     ]
 
     private static let en: [String: String] = [
@@ -84,17 +92,21 @@ public enum L10n {
         "open.folder": "Open folder",
         "next.file": "Next file",
         "scan": "SCAN",
+        "cancel": "Cancel scan",
         "refresh": "Refresh scanners",
         "preview": "Preview",
         "preview.empty.title": "Your document will appear here",
         "preview.empty.body": "Choose a real scanner discovered through ImageCaptureCore, or use Mock Scanner to test the UI, ADF, multi-page PDF and file output without hardware.",
         "status.ready": "Ready to scan",
         "status.scanning": "Scanning…",
+        "status.cancelling": "Cancelling scan…",
+        "status.cancelled": "Scan cancelled",
         "status.saved": "Saved",
         "status.mock": "Test mode: Mock Scanner",
         "status.hardware": "Real scanner via ImageCaptureCore",
         "menu.scan": "Scan",
         "menu.scan.now": "Scan now",
+        "menu.cancel": "Cancel scan",
         "menu.refresh": "Refresh devices",
         "menu.language": "Language",
         "menu.help": "Help",
@@ -115,8 +127,12 @@ public enum L10n {
         "go": "Open",
         "legal.title": "Legal information",
         "legal.body": "AMURWEB Scan is distributed free of charge. All rights to the application, name and visual materials belong to Amur Web Center (AMURWEB). The software is provided as is. Scanner compatibility depends on macOS, device drivers and the capabilities of the specific scanner. Scanned documents are processed and stored locally.",
-        "alpha.notice": "0.3.0 Alpha · ADF, duplex and multi-page PDF · external real-Mac scanner test required",
-        "error": "Error"
+        "alpha.notice": "0.4.0 Alpha · scan cancellation and improved error handling · external real-Mac scanner test required",
+        "error": "Error",
+        "error.noDevice": "No scanner is selected. Refresh the device list and choose a scanner.",
+        "error.noFolder": "No save folder is selected. Choose a folder in Finder.",
+        "error.unsupported": "The selected feature is not supported by this scanner.",
+        "error.scanFailed": "Scanning failed. Check the scanner connection and device state."
     ]
 
     public static func text(_ key: String, language: AppLanguage) -> String {
