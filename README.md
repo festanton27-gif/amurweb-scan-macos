@@ -1,49 +1,37 @@
-# AMURWEB Scan for macOS 0.3.0 Alpha
+# AMURWEB Scan for macOS 0.4.0 Alpha
 
 Native macOS branch of the free AMURWEB Scan document scanner.
 
-## 0.3.0 Alpha
+## 0.4.0 Alpha
 
-This build expands the ImageCaptureCore hardware layer beyond a single flat scan and prepares the app for real-world scanner testing.
+This build focuses on safer real-hardware behavior before external testing.
 
 Implemented:
 
 - native SwiftUI interface for macOS 13+;
 - Russian and English UI;
-- real scanner discovery using `ICDeviceBrowser`;
-- real scan requests using `ICScannerDevice`;
-- source selection: Automatic / Flatbed / Document Feeder (ADF);
-- duplex request for ADF devices that report duplex support;
-- multi-page ADF handling;
-- multi-page PDF output from one feeder job;
-- sequential JPG/PNG files for multi-page image output;
-- diagnostic Mock Scanner with virtual flatbed and multi-page ADF;
-- scanner diagnostics window for support reports;
-- Finder folder selection;
-- 150 / 200 / 300 / 600 DPI request with nearest supported fallback;
-- color, grayscale and B&W scan modes;
-- JPG, PNG and PDF output;
-- automatic `Скан/Scan - YYYY-MM-DD - 001` naming;
-- settings persistence;
-- preview;
-- About / Support / Diagnostics / Legal windows;
-- AMURWEB company and product branding;
+- real scanner discovery through ImageCaptureCore;
+- Automatic / Flatbed / ADF source selection;
+- duplex request for supported ADF devices;
+- multi-page ADF scanning;
+- multi-page PDF;
+- sequential multi-page JPG/PNG output;
+- native scan cancellation through `ICScannerDevice.cancelScan()`;
+- visible Cancel control while a job is active;
+- scanner settings locked while scanning;
+- scanner-reported capabilities used to adapt source/DPI/duplex controls;
+- friendlier RU/EN scan errors while preserving technical details for support;
+- Scanner diagnostics window;
+- Mock flatbed and Mock ADF for CI-friendly functional testing;
+- Finder folder selection and persistent settings;
+- AMURWEB branding, About, Support and Legal windows;
 - Apple Silicon + Intel CI and Universal DMG packaging.
 
-## Hardware validation warning
+## Validation status
 
-The project owner does not currently have a physical Mac. GitHub Actions verifies compilation on real macOS runners for both Apple Silicon and Intel, but it cannot attach a USB scanner. Therefore **0.3.0 remains Alpha until an external real-Mac scanner test confirms discovery and scanning**.
+GitHub Actions validates Apple Silicon and Intel compilation, Swift tests and Universal DMG packaging. Physical scanner behavior still requires an external Mac + scanner test before Beta.
 
-The built-in **Scanner diagnostics** window is intended to make that external test useful: it reports which scanners ImageCaptureCore can see, available functional-unit types, current/supported DPI, and ADF/duplex information when the selected unit exposes it.
-
-## Architecture
-
-`ScannerHubBackend` combines:
-
-- `ImageCaptureScannerBackend` — actual ImageCaptureCore hardware;
-- `MockScannerBackend` — deterministic diagnostic scanner.
-
-The app asks ImageCaptureCore for PNG pages in file-transfer mode, then converts them locally to the requested output. ADF scans can produce multiple files; PDF output combines all returned pages into one document.
+The Alpha uses ad-hoc signing. Stable public distribution will require Developer ID signing and Apple notarization.
 
 ## Build
 
@@ -54,6 +42,4 @@ swift build -c release
 
 GitHub Actions creates:
 
-`AMURWEB-Scan-macOS-0.3.0-Alpha-Universal.dmg`
-
-The Alpha uses ad-hoc signing. Stable public distribution will require Developer ID signing and Apple notarization.
+`AMURWEB-Scan-macOS-0.4.0-Alpha-Universal.dmg`
