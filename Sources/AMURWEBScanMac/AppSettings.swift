@@ -11,6 +11,7 @@ final class AppSettings: ObservableObject {
     @Published var duplexEnabled: Bool { didSet { defaults.set(duplexEnabled, forKey: Keys.duplex) } }
     @Published var outputFolder: URL? { didSet { defaults.set(outputFolder?.path, forKey: Keys.folder) } }
     @Published var lastScannerID: String? { didSet { defaults.set(lastScannerID, forKey: Keys.scanner) } }
+    @Published var automaticUpdateChecks: Bool { didSet { defaults.set(automaticUpdateChecks, forKey: Keys.automaticUpdateChecks) } }
 
     private let defaults: UserDefaults
 
@@ -23,6 +24,7 @@ final class AppSettings: ObservableObject {
         static let duplex = "duplexEnabled"
         static let folder = "folder"
         static let scanner = "scanner"
+        static let automaticUpdateChecks = "automaticUpdateChecks"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -49,6 +51,7 @@ final class AppSettings: ObservableObject {
         }
 
         lastScannerID = defaults.string(forKey: Keys.scanner)
+        automaticUpdateChecks = defaults.object(forKey: Keys.automaticUpdateChecks) as? Bool ?? true
     }
 
     func t(_ key: String) -> String {
