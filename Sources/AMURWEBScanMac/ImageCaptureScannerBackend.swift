@@ -32,9 +32,39 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         try await Task.sleep(nanoseconds: 700_000_000)
         return scanners
             .map { key, scanner in
-                ScannerDevice(id: key, name: scanner.name ?? "Scanner", isMock: false)
+                scannerDeviceModel(id: key, scanner: scanner)
             }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    private func scannerDeviceModel(id: String, scanner: ICScannerDevice) -> ScannerDevice {
+        let functionalTypes = scanner.availableFunctionalUnitTypes.compactMap {
+            ICScannerFunctionalUnitType(rawValue: UInt($0.uintValue))
+        }
+
+        var sources: [ScanSource] = [.automatic]
+        if functionalTypes.contains(.flatbed) { sources.append(.flatbed) }
+        if functionalTypes.contains(.documentFeeder) { sources.append(.documentFeeder) }
+
+        let unit = scanner.selectedFunctionalUnit
+        let reportedResolutions = Array(unit.supportedResolutions)
+        let duplex: Bool?
+        if let feeder = unit as? ICScannerFunctionalUnitDocumentFeeder {
+            duplex = feeder.supportsDuplexScanning
+        } else if functionalTypes.contains(.documentFeeder) {
+            duplex = nil
+        } else {
+            duplex = false
+        }
+
+        return ScannerDevice(
+            id: id,
+            name: scanner.name ?? "Scanner",
+            isMock: false,
+            supportedSources: sources,
+            reportedResolutions: reportedResolutions,
+            supportsDuplex: duplex
+        )
     }
 
     func diagnosticReport() async -> String {
