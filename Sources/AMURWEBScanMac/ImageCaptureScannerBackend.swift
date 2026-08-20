@@ -15,6 +15,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
     private var activeScanner: ICScannerDevice?
     private var scannedURLs: [URL] = []
     private var scanContinuation: CheckedContinuation<ScanResult, Error>?
+    private var cancelRequested = false
 
     private var selectionScanner: ICScannerDevice?
     private var selectionContinuation: CheckedContinuation<Void, Error>?
@@ -41,7 +42,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         try? await Task.sleep(nanoseconds: 700_000_000)
 
         var lines: [String] = [
-            "AMURWEB Scan macOS 0.3.0 Alpha",
+            "AMURWEB Scan macOS 0.4.0 Alpha",
             "Backend: ImageCaptureCore",
             "Detected hardware scanners: \(scanners.count)",
             ""
@@ -92,6 +93,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
 
         try FileManager.default.createDirectory(at: request.outputFolder, withIntermediateDirectories: true)
 
+        cancelRequested = false
         activeRequest = request
         activeScanner = scanner
         scannedURLs.removeAll()
@@ -101,17 +103,40 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
             if !scanner.hasOpenSession {
                 try await scanner.requestOpenSession(options: nil)
             }
+            try Task.checkCancellation()
             try await selectSourceIfNeeded(scanner: scanner, request: request)
+            try Task.checkCancellation()
             try configure(scanner: scanner, request: request)
+        } catch is CancellationError {
+            clearActiveScan()
+            throw ScannerBackendError.cancelled
         } catch {
             clearActiveScan()
             throw error
+        }
+
+        guard !cancelRequested else {
+            clearActiveScan()
+            throw ScannerBackendError.cancelled
         }
 
         return try await withCheckedThrowingContinuation { continuation in
             scanContinuation = continuation
             scanner.requestScan()
         }
+    }
+
+    func cancelScan() {
+        guard let scanner = activeScanner else { return }
+        cancelRequested = true
+
+        if let continuation = selectionContinuation {
+            selectionContinuation = nil
+            selectionScanner = nil
+            continuation.resume(throwing: ScannerBackendError.cancelled)
+        }
+
+        scanner.cancelScan()
     }
 
     private func startBrowserIfNeeded() {
@@ -209,6 +234,16 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
 
     private func finishHardwareScan(error: Error?) {
         guard let continuation = scanContinuation else {
+            if cancelRequested {
+                cleanupTemporaryScans()
+                clearActiveScan()
+            }
+            return
+        }
+
+        if cancelRequested {
+            continuation.resume(throwing: ScannerBackendError.cancelled)
+            cleanupTemporaryScans()
             clearActiveScan()
             return
         }
@@ -272,6 +307,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         activeRequest = nil
         activeScanner = nil
         scannedURLs.removeAll()
+        cancelRequested = false
 
         if let continuation = selectionContinuation {
             continuation.resume(throwing: ScannerBackendError.scanFailed("Scan source selection was interrupted."))
@@ -329,7 +365,9 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         if selectionScanner === scanner, let continuation = selectionContinuation {
             selectionContinuation = nil
             selectionScanner = nil
-            if let error {
+            if cancelRequested {
+                continuation.resume(throwing: ScannerBackendError.cancelled)
+            } else if let error {
                 continuation.resume(throwing: error)
             } else {
                 continuation.resume()
