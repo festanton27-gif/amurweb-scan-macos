@@ -36,6 +36,52 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
+    func diagnosticReport() async -> String {
+        startBrowserIfNeeded()
+        try? await Task.sleep(nanoseconds: 700_000_000)
+
+        var lines: [String] = [
+            "AMURWEB Scan macOS 0.3.0 Alpha",
+            "Backend: ImageCaptureCore",
+            "Detected hardware scanners: \(scanners.count)",
+            ""
+        ]
+
+        for (index, pair) in scanners.sorted(by: { ($0.value.name ?? "") < ($1.value.name ?? "") }).enumerated() {
+            let (id, scanner) = pair
+            let types = scanner.availableFunctionalUnitTypes.compactMap {
+                ICScannerFunctionalUnitType(rawValue: UInt($0.uintValue))
+            }.map(functionalUnitName).joined(separator: ", ")
+
+            let unit = scanner.selectedFunctionalUnit
+            let resolutions = unit.supportedResolutions.map(String.init).joined(separator: ", ")
+
+            lines.append("Scanner \(index + 1)")
+            lines.append("Name: \(scanner.name ?? "Scanner")")
+            lines.append("ID: \(id)")
+            lines.append("Session open: \(scanner.hasOpenSession ? "yes" : "no")")
+            lines.append("USB vendor/product/location: \(scanner.usbVendorID)/\(scanner.usbProductID)/\(scanner.usbLocationID)")
+            lines.append("Available sources: \(types.isEmpty ? "unknown" : types)")
+            lines.append("Selected source: \(functionalUnitName(unit.type))")
+            lines.append("Current resolution: \(unit.resolution) DPI")
+            lines.append("Supported resolutions: \(resolutions.isEmpty ? "not reported" : resolutions)")
+            lines.append("Physical size: \(Int(unit.physicalSize.width)) × \(Int(unit.physicalSize.height))")
+
+            if let feeder = unit as? ICScannerFunctionalUnitDocumentFeeder {
+                lines.append("ADF document loaded: \(feeder.documentLoaded ? "yes" : "no")")
+                lines.append("ADF duplex supported: \(feeder.supportsDuplexScanning ? "yes" : "no")")
+                lines.append("ADF duplex enabled: \(feeder.duplexScanningEnabled ? "yes" : "no")")
+            }
+            lines.append("")
+        }
+
+        if scanners.isEmpty {
+            lines.append("No hardware scanner is currently visible to ImageCaptureCore.")
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
     func scan(_ request: ScanRequest) async throws -> ScanResult {
         guard scanContinuation == nil, selectionContinuation == nil else {
             throw ScannerBackendError.scanFailed("Another hardware scan is already in progress.")
@@ -88,6 +134,16 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
             return "ic:serial:\(serial)"
         }
         return "ic:\(scanner.usbVendorID):\(scanner.usbProductID):\(scanner.usbLocationID):\(scanner.name ?? "scanner")"
+    }
+
+    private func functionalUnitName(_ type: ICScannerFunctionalUnitType) -> String {
+        switch type {
+        case .flatbed: return "flatbed"
+        case .documentFeeder: return "document feeder (ADF)"
+        case .negativeTransparency: return "negative transparency"
+        case .positiveTransparency: return "positive transparency"
+        @unknown default: return "unknown(\(type.rawValue))"
+        }
     }
 
     private func selectSourceIfNeeded(scanner: ICScannerDevice, request: ScanRequest) async throws {
