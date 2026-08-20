@@ -9,6 +9,7 @@ final class ScanViewModel: ObservableObject {
     @Published var isBusy = false
     @Published var statusKey = "status.mock"
     @Published var previewURL: URL?
+    @Published var lastOutputURLs: [URL] = []
     @Published var errorMessage: String?
 
     private let backend: any ScannerBackend
@@ -62,15 +63,18 @@ final class ScanViewModel: ObservableObject {
                 dpi: settings.selectedDPI,
                 colorMode: settings.colorMode,
                 format: settings.format,
+                source: settings.scanSource,
+                duplexEnabled: settings.duplexEnabled,
                 outputFolder: folder,
                 language: settings.language
             )
             let result = try await backend.scan(request)
-            previewURL = result.fileURL
+            lastOutputURLs = result.fileURLs
+            previewURL = result.fileURLs.first
             statusKey = "status.saved"
         } catch {
             errorMessage = error.localizedDescription
-            statusKey = "status.ready"
+            statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
         }
     }
 
