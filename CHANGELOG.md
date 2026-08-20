@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.0 Alpha
+
+- Added native scan cancellation through ImageCaptureCore and a visible Cancel control while scanning.
+- Added cancellation support to Mock Scanner for hardware-independent UI testing.
+- Scan settings are locked while a job is active to avoid mid-scan configuration changes.
+- Added friendlier Russian and English error messages while retaining useful technical details for support.
+- Scanner discovery now reports available sources, supported resolutions and duplex capability to the UI.
+- Source selection adapts to the selected device instead of offering unsupported Flatbed/ADF modes blindly.
+- Standard DPI choices are filtered using scanner-reported capabilities when available.
+- Incompatible remembered source/DPI/duplex settings are normalized when changing devices.
+- Scanner diagnostics and support text were retained and updated for the new capability-aware hardware layer.
+- Updated About information and Universal DMG packaging to 0.4.0 Alpha.
+
+### Validation status
+
+Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are verified through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
+
 ## 0.3.0 Alpha
 
 - Added scan source selection: Automatic, Flatbed and Document Feeder (ADF).
