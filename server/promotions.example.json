@@ -1,0 +1,30 @@
+{
+  "products": [
+    {
+      "id": "amurweb-lead-firewall",
+      "title": {
+        "ru": "AMURWEB Lead Firewall",
+        "en": "AMURWEB Lead Firewall"
+      },
+      "description": {
+        "ru": "Защита заявок сайта от перехвата и подмены получателей.",
+        "en": "Protect website leads from interception and recipient substitution."
+      },
+      "url": "https://awc-dv.ru/",
+      "enabled": true
+    },
+    {
+      "id": "amurweb-ecosystem",
+      "title": {
+        "ru": "Другие решения AMURWEB",
+        "en": "More AMURWEB products"
+      },
+      "description": {
+        "ru": "Программы, плагины и сервисы Амурского Веб Центра.",
+        "en": "Apps, plugins and services from Amur Web Center."
+      },
+      "url": "https://awc-dv.ru/",
+      "enabled": true
+    }
+  ]
+}
