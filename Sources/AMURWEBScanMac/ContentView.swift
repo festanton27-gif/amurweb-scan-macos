@@ -92,6 +92,7 @@ struct ContentView: View {
                 }
                 .padding(4)
             }
+            .disabled(model.isBusy)
 
             GroupBox {
                 VStack(alignment: .leading, spacing: 9) {
@@ -110,6 +111,7 @@ struct ContentView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(Color.orange)
+                    .disabled(model.isBusy)
 
                     Button {
                         model.openOutputFolder(settings: settings)
@@ -130,20 +132,35 @@ struct ContentView: View {
                 .padding(4)
             }
 
-            Button {
-                Task { await model.scan(settings: settings) }
-            } label: {
-                HStack {
-                    if model.isBusy { ProgressView().controlSize(.small) }
-                    Image(systemName: "scanner")
-                    Text(settings.t("scan"))
-                        .font(.system(size: 17, weight: .bold))
+            if model.isBusy {
+                Button(role: .destructive) {
+                    model.cancelScan()
+                } label: {
+                    HStack {
+                        if model.isCancelling { ProgressView().controlSize(.small) }
+                        Image(systemName: "xmark.circle")
+                        Text(settings.t("cancel"))
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 42)
                 }
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .buttonStyle(.bordered)
+                .disabled(model.isCancelling)
+            } else {
+                Button {
+                    Task { await model.scan(settings: settings) }
+                } label: {
+                    HStack {
+                        Image(systemName: "scanner")
+                        Text(settings.t("scan"))
+                            .font(.system(size: 17, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.orange)
+                .disabled(model.selectedDevice == nil)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.orange)
-            .disabled(model.isBusy || model.selectedDevice == nil)
 
             Spacer(minLength: 0)
 
