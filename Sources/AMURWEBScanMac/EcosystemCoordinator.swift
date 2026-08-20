@@ -48,7 +48,7 @@ struct AppNotice: Identifiable {
 
 @MainActor
 final class EcosystemCoordinator: ObservableObject {
-    static let currentVersion = "0.5.0"
+    static let currentVersion = "0.6.0"
 
     @Published var promotion: PromotionPresentation?
     @Published var notice: AppNotice?
@@ -85,7 +85,6 @@ final class EcosystemCoordinator: ObservableObject {
 
         guard EcosystemLaunchPolicy.shouldShowPromotion(on: launchNumber) else { return }
 
-        // Let the main window settle before presenting a non-critical ecosystem card.
         try? await Task.sleep(nanoseconds: 700_000_000)
         promotion = await promotionForLaunch(launchNumber, language: settings.language)
     }
@@ -187,7 +186,6 @@ final class EcosystemCoordinator: ObservableObject {
         let enabled = catalog.products.filter { $0.enabled != false }
         guard !enabled.isEmpty else { return nil }
 
-        // Deterministic local rotation. No impression/click history is sent anywhere.
         let index = max(0, launchNumber - 11) % enabled.count
         let product = enabled[index]
         guard let url = URL(string: product.url), ["https", "http"].contains(url.scheme?.lowercased() ?? "") else {
