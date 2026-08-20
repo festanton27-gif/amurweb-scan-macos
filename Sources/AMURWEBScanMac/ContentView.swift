@@ -41,6 +41,7 @@ struct ContentView: View {
                         set: {
                             model.selectedDeviceID = $0
                             settings.lastScannerID = $0
+                            model.statusKey = model.selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
                         }
                     )) {
                         ForEach(model.devices) { device in
@@ -178,7 +179,11 @@ struct ContentView: View {
             badge(settings.t("badge.free"), color: .green)
             badge(settings.t("badge.offline"), color: .blue)
             badge(settings.t("badge.mac"), color: .gray)
-            badge(settings.t("badge.mock"), color: .orange)
+            if model.selectedDevice?.isMock == true {
+                badge(settings.t("badge.mock"), color: .orange)
+            } else {
+                badge(settings.t("badge.hardware"), color: .orange)
+            }
             Spacer()
         }
     }

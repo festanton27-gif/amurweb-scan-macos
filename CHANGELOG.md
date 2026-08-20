@@ -1,13 +1,16 @@
 # Changelog
 
-## 0.1.0 Alpha
+## 0.2.0 Alpha
 
-- Started native macOS branch on SwiftUI.
-- Added RU/EN UI and persistent settings.
-- Added Finder folder selection.
-- Added JPG, PNG and single-page PDF output.
-- Added date/folder-aware scan numbering.
-- Added product/company branding, About, Support and Legal windows.
-- Added Mock Scanner for hardware-independent testing.
-- Added GitHub Actions builds for Apple Silicon and Intel with Universal DMG packaging.
-- Hardware ImageCaptureCore scanning intentionally deferred to the next alpha.
+- Added real scanner discovery through Apple ImageCaptureCore.
+- Added a hardware scanning backend alongside Mock Scanner.
+- Real scanners are shown in the same device selector as diagnostic virtual scanners.
+- Added first real scan request using file-based ImageCaptureCore transfer.
+- DPI and color / grayscale / B&W mode are applied to the selected functional unit when supported by the scanner module.
+- Hardware scan is staged as PNG and converted locally to JPG, PNG or one-page PDF.
+- Restored AMURWEB company logo, AMURWEB Scan product logo and app icon to packaged app.
+- Updated Intel + Apple Silicon CI packaging to 0.2.0 Alpha Universal DMG.
+
+### Validation status
+
+CI compilation and packaging can be validated without physical hardware. Actual scanner compatibility still requires an external Mac + scanner test before stable release.

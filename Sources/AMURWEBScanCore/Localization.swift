@@ -7,6 +7,7 @@ public enum L10n {
         "badge.offline": "OFFLINE",
         "badge.mac": "macOS",
         "badge.mock": "MOCK",
+        "badge.hardware": "СКАНЕР",
         "scanner": "Сканер",
         "resolution": "Разрешение",
         "mode": "Режим",
@@ -22,11 +23,12 @@ public enum L10n {
         "refresh": "Обновить сканеры",
         "preview": "Предпросмотр",
         "preview.empty.title": "Документ появится здесь",
-        "preview.empty.body": "В Alpha используется виртуальный сканер. Он позволяет проверить интерфейс, Finder, JPG/PNG/PDF и нумерацию без физического Mac-сканера.",
+        "preview.empty.body": "Выберите реальный сканер, найденный через ImageCaptureCore, или виртуальный Mock Scanner для проверки интерфейса и сохранения без оборудования.",
         "status.ready": "Готово к сканированию",
         "status.scanning": "Сканирование…",
         "status.saved": "Сохранено",
         "status.mock": "Режим тестирования: Mock Scanner",
+        "status.hardware": "Реальный сканер через ImageCaptureCore",
         "menu.scan": "Сканирование",
         "menu.scan.now": "Сканировать сейчас",
         "menu.refresh": "Обновить устройства",
@@ -43,7 +45,7 @@ public enum L10n {
         "go": "Перейти",
         "legal.title": "Правовая информация",
         "legal.body": "AMURWEB Scan распространяется бесплатно. Все права на программу, название и визуальные материалы принадлежат Амурскому Веб Центру (АМУРВЕБ). Программа предоставляется «как есть». Совместимость со сканерами зависит от macOS, драйверов и возможностей конкретного устройства. Отсканированные документы обрабатываются и сохраняются локально.",
-        "alpha.notice": "0.1.0 Alpha · аппаратное сканирование пока не включено",
+        "alpha.notice": "0.2.0 Alpha · ImageCaptureCore включён · требуется внешний тест на реальном Mac и сканере",
         "error": "Ошибка"
     ]
 
@@ -53,6 +55,7 @@ public enum L10n {
         "badge.offline": "OFFLINE",
         "badge.mac": "macOS",
         "badge.mock": "MOCK",
+        "badge.hardware": "SCANNER",
         "scanner": "Scanner",
         "resolution": "Resolution",
         "mode": "Mode",
@@ -68,11 +71,12 @@ public enum L10n {
         "refresh": "Refresh scanners",
         "preview": "Preview",
         "preview.empty.title": "Your document will appear here",
-        "preview.empty.body": "Alpha uses a virtual scanner so we can test the UI, Finder, JPG/PNG/PDF and file numbering without physical Mac scanner hardware.",
+        "preview.empty.body": "Choose a real scanner discovered through ImageCaptureCore, or use Mock Scanner to test the interface and file output without hardware.",
         "status.ready": "Ready to scan",
         "status.scanning": "Scanning…",
         "status.saved": "Saved",
         "status.mock": "Test mode: Mock Scanner",
+        "status.hardware": "Real scanner via ImageCaptureCore",
         "menu.scan": "Scan",
         "menu.scan.now": "Scan now",
         "menu.refresh": "Refresh devices",
@@ -89,7 +93,7 @@ public enum L10n {
         "go": "Open",
         "legal.title": "Legal information",
         "legal.body": "AMURWEB Scan is distributed free of charge. All rights to the application, name and visual materials belong to Amur Web Center (AMURWEB). The software is provided as is. Scanner compatibility depends on macOS, device drivers and the capabilities of the specific scanner. Scanned documents are processed and stored locally.",
-        "alpha.notice": "0.1.0 Alpha · hardware scanning is not enabled yet",
+        "alpha.notice": "0.2.0 Alpha · ImageCaptureCore enabled · external real-Mac scanner test required",
         "error": "Error"
     ]
 
