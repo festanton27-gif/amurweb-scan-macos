@@ -10,10 +10,15 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
     private let browser = ICDeviceBrowser()
     private var browserStarted = false
     private var scanners: [String: ICScannerDevice] = [:]
+
     private var activeRequest: ScanRequest?
     private var activeScanner: ICScannerDevice?
     private var scannedURLs: [URL] = []
     private var scanContinuation: CheckedContinuation<ScanResult, Error>?
+
+    private var selectionScanner: ICScannerDevice?
+    private var selectionContinuation: CheckedContinuation<Void, Error>?
+
     private let namer = ScanFileNamer()
 
     override init() {
@@ -32,7 +37,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
     }
 
     func scan(_ request: ScanRequest) async throws -> ScanResult {
-        guard scanContinuation == nil else {
+        guard scanContinuation == nil, selectionContinuation == nil else {
             throw ScannerBackendError.scanFailed("Another hardware scan is already in progress.")
         }
         guard let scanner = scanners[request.device.id] else {
@@ -50,6 +55,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
             if !scanner.hasOpenSession {
                 try await scanner.requestOpenSession(options: nil)
             }
+            try await selectSourceIfNeeded(scanner: scanner, request: request)
             try configure(scanner: scanner, request: request)
         } catch {
             clearActiveScan()
@@ -84,6 +90,38 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         return "ic:\(scanner.usbVendorID):\(scanner.usbProductID):\(scanner.usbLocationID):\(scanner.name ?? "scanner")"
     }
 
+    private func selectSourceIfNeeded(scanner: ICScannerDevice, request: ScanRequest) async throws {
+        let desiredType: ICScannerFunctionalUnitType?
+        switch request.source {
+        case .automatic:
+            desiredType = nil
+        case .flatbed:
+            desiredType = .flatbed
+        case .documentFeeder:
+            desiredType = .documentFeeder
+        }
+
+        guard let desiredType else { return }
+
+        let available = scanner.availableFunctionalUnitTypes.compactMap {
+            ICScannerFunctionalUnitType(rawValue: UInt($0.uintValue))
+        }
+        guard available.contains(desiredType) else {
+            let readable = request.source == .flatbed ? "flatbed" : "document feeder"
+            throw ScannerBackendError.unavailable("The selected scanner does not provide a \(readable) source.")
+        }
+
+        if scanner.selectedFunctionalUnit.type == desiredType {
+            return
+        }
+
+        try await withCheckedThrowingContinuation { continuation in
+            selectionScanner = scanner
+            selectionContinuation = continuation
+            scanner.requestSelect(desiredType)
+        }
+    }
+
     private func configure(scanner: ICScannerDevice, request: ScanRequest) throws {
         scanner.transferMode = .fileBased
         scanner.downloadsDirectory = FileManager.default.temporaryDirectory
@@ -101,6 +139,10 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         case .blackAndWhite:
             unit.pixelDataType = .BW
         }
+
+        if let feeder = unit as? ICScannerFunctionalUnitDocumentFeeder {
+            feeder.duplexScanningEnabled = request.duplexEnabled && feeder.supportsDuplexScanning
+        }
     }
 
     private func bestResolution(_ requested: Int, supported: IndexSet, fallback: Int) -> Int {
@@ -117,32 +159,56 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
 
         if let error {
             continuation.resume(throwing: error)
+            cleanupTemporaryScans()
             clearActiveScan()
             return
         }
 
-        guard let request = activeRequest, let sourceURL = scannedURLs.first else {
+        guard let request = activeRequest, !scannedURLs.isEmpty else {
             continuation.resume(throwing: ScannerBackendError.scanFailed("The scanner completed without returning a file."))
+            cleanupTemporaryScans()
             clearActiveScan()
             return
         }
 
         do {
-            let outputURL = namer.nextFileURL(
-                in: request.outputFolder,
-                format: request.format,
-                language: request.language
-            )
-            try ImageOutputWriter.convert(sourceURL: sourceURL, to: outputURL, format: request.format)
-            continuation.resume(returning: ScanResult(fileURL: outputURL, deviceName: request.device.name))
+            let outputURLs: [URL]
+
+            if request.format == .pdf {
+                let outputURL = namer.nextFileURL(
+                    in: request.outputFolder,
+                    format: .pdf,
+                    language: request.language
+                )
+                try ImageOutputWriter.convert(sourceURLs: scannedURLs, to: outputURL, format: .pdf)
+                outputURLs = [outputURL]
+            } else {
+                var pages: [URL] = []
+                for sourceURL in scannedURLs {
+                    let outputURL = namer.nextFileURL(
+                        in: request.outputFolder,
+                        format: request.format,
+                        language: request.language
+                    )
+                    try ImageOutputWriter.convert(sourceURL: sourceURL, to: outputURL, format: request.format)
+                    pages.append(outputURL)
+                }
+                outputURLs = pages
+            }
+
+            continuation.resume(returning: ScanResult(fileURLs: outputURLs, deviceName: request.device.name))
         } catch {
             continuation.resume(throwing: error)
         }
 
+        cleanupTemporaryScans()
+        clearActiveScan()
+    }
+
+    private func cleanupTemporaryScans() {
         for url in scannedURLs {
             try? FileManager.default.removeItem(at: url)
         }
-        clearActiveScan()
     }
 
     private func clearActiveScan() {
@@ -150,6 +216,12 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         activeRequest = nil
         activeScanner = nil
         scannedURLs.removeAll()
+
+        if let continuation = selectionContinuation {
+            continuation.resume(throwing: ScannerBackendError.scanFailed("Scan source selection was interrupted."))
+        }
+        selectionContinuation = nil
+        selectionScanner = nil
     }
 
     func deviceBrowser(_ browser: ICDeviceBrowser, didAdd device: ICDevice, moreComing: Bool) {
@@ -163,6 +235,13 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         let id = stableID(for: scanner)
         scanners[id] = nil
         scanner.delegate = nil
+
+        if selectionScanner === scanner, let continuation = selectionContinuation {
+            selectionContinuation = nil
+            selectionScanner = nil
+            continuation.resume(throwing: ScannerBackendError.scanFailed("The scanner was disconnected while selecting a scan source."))
+        }
+
         if activeScanner === scanner {
             finishHardwareScan(error: ScannerBackendError.scanFailed("The scanner was disconnected during scanning."))
         }
@@ -191,6 +270,17 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
     }
 
     func scannerDevice(_ scanner: ICScannerDevice, didSelect functionalUnit: ICScannerFunctionalUnit, error: Error?) {
+        if selectionScanner === scanner, let continuation = selectionContinuation {
+            selectionContinuation = nil
+            selectionScanner = nil
+            if let error {
+                continuation.resume(throwing: error)
+            } else {
+                continuation.resume()
+            }
+            return
+        }
+
         if let error, activeScanner === scanner {
             finishHardwareScan(error: error)
         }
