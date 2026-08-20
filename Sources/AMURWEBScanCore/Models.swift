@@ -94,6 +94,7 @@ public enum ScannerBackendError: LocalizedError, Sendable {
     case noDevice
     case unavailable(String)
     case scanFailed(String)
+    case cancelled
 
     public var errorDescription: String? {
         switch self {
@@ -101,6 +102,8 @@ public enum ScannerBackendError: LocalizedError, Sendable {
             return "Scanner device is not selected."
         case .unavailable(let message), .scanFailed(let message):
             return message
+        case .cancelled:
+            return "Scanning was cancelled."
         }
     }
 }
