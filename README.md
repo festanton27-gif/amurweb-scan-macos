@@ -1,40 +1,51 @@
-# AMURWEB Scan for macOS 0.1.0 Alpha
+# AMURWEB Scan for macOS 0.2.0 Alpha
 
-Первый macOS-прототип AMURWEB Scan.
+Native macOS branch of the free AMURWEB Scan document scanner.
 
-## Что уже работает в Alpha
+## 0.2.0 Alpha
 
-- нативный интерфейс SwiftUI для macOS 13+;
-- верхнее системное меню macOS;
-- русский и английский языки;
-- запоминание языка, DPI, режима, формата, папки и выбранного устройства;
-- выбор папки через штатный Finder (`NSOpenPanel`);
-- JPG, PNG и одностраничный PDF;
-- автоматические имена `Скан/Scan - YYYY-MM-DD - 001`;
-- общая последовательность номера между JPG/PNG/PDF;
-- предпросмотр;
-- окно «О программе» с AMURWEB, `awc-dv.ru` и `info@awc-dv.ru`;
-- техподдержка и правовая информация;
-- Mock Scanner для тестирования без физического сканера;
-- GitHub Actions: Apple Silicon + Intel → Universal app → DMG.
+This build introduces the first real scanner transport through Apple's **ImageCaptureCore** framework.
 
-## Пока НЕ включено
+Implemented:
 
-Аппаратное сканирование. `ImageCaptureScannerBackend` специально оставлен отдельным слоем и будет реализован через ImageCaptureCore после того, как CI подтвердит сборку приложения на macOS.
+- native SwiftUI interface for macOS 13+;
+- Russian and English UI;
+- real scanner discovery using `ICDeviceBrowser`;
+- real scan requests using `ICScannerDevice`;
+- diagnostic Mock Scanner remains available;
+- Finder folder selection;
+- 150 / 200 / 300 / 600 DPI request with nearest supported fallback;
+- color, grayscale and B&W scan modes;
+- JPG, PNG and one-page PDF output;
+- automatic `Скан/Scan - YYYY-MM-DD - 001` naming;
+- settings persistence;
+- preview;
+- About / Support / Legal windows;
+- AMURWEB company and product branding;
+- Apple Silicon + Intel CI and Universal DMG packaging.
 
-## Почему Mock Scanner полезен
+## Hardware validation warning
 
-У разработчика сейчас нет физического Mac. Mock Scanner позволяет автоматически проверить почти всю продуктовую логику: интерфейс, Finder, настройки, форматы, PDF и нумерацию. Для подтверждения реальной совместимости со сканерами всё равно потребуется внешний тест на Mac со сканером.
+The project owner does not currently have a physical Mac. GitHub Actions verifies compilation on real macOS runners for both Apple Silicon and Intel, but it cannot attach a USB scanner. Therefore **0.2.0 remains Alpha until at least one external real-Mac scanner test succeeds**.
 
-## Локальная сборка на Mac
+## Architecture
+
+`ScannerHubBackend` combines:
+
+- `ImageCaptureScannerBackend` — actual ImageCaptureCore hardware;
+- `MockScannerBackend` — deterministic diagnostic scanner.
+
+The app asks ImageCaptureCore for a PNG scan in file-transfer mode, then converts the result locally to the user's requested JPG, PNG or PDF output.
+
+## Build
 
 ```bash
 swift test
 swift build -c release
 ```
 
-## Автоматическая сборка без Mac
+GitHub Actions creates:
 
-Файл `.github/workflows/macos-build.yml` запускает две реальные macOS-машины GitHub: Apple Silicon и Intel. После успешной компиляции создаётся Universal `.dmg`.
+`AMURWEB-Scan-macOS-0.2.0-Alpha-Universal.dmg`
 
-Текущий Alpha использует ad-hoc подпись. Перед публичным стабильным релизом нужен Developer ID и Apple notarization.
+The Alpha uses ad-hoc signing. Stable public distribution will require Developer ID signing and Apple notarization.
