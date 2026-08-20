@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: macos-alpha-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   arm64:
     name: Apple Silicon
