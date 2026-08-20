@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0 Alpha
+
+- Added manual multi-page PDF scanning for ordinary flatbed scanners without an ADF.
+- The workflow scans one page at a time and asks whether to scan the next page, finish the document, or cancel.
+- When source is Automatic and the scanner reports a Flatbed unit, manual multi-page mode explicitly selects Flatbed to avoid an accidental ADF path.
+- Intermediate pages are scanned as PNG into a temporary session directory and removed after completion/cancellation.
+- Only the final combined PDF is saved to the selected document folder and consumes the normal file-number sequence.
+- Manual multi-page mode is available only for PDF and is disabled when ADF is selected.
+- Existing automatic ADF multipage PDF, duplex, JPG/PNG multipage output, cancellation, diagnostics and scanner acquisition paths remain unchanged.
+- Retained 0.5.0 update notifications and AMURWEB ecosystem promotion behavior.
+- Updated RU/EN UI, About information and Universal DMG packaging to 0.6.0 Alpha.
+
+### Validation status
+
+Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are verified through GitHub Actions. Physical flatbed/ADF behavior still requires an external Mac + scanner test before Beta.
+
 ## 0.5.0 Alpha
 
 - Added lightweight update notifications through the AMURWEB update endpoint.
@@ -15,10 +31,6 @@
 - Scanner discovery, ImageCaptureCore acquisition, ADF, duplex, multi-page PDF, cancellation and diagnostics behavior remain unchanged from 0.4.0.
 - Updated About, diagnostics footer and Universal DMG packaging to 0.5.0 Alpha.
 
-### Validation status
-
-Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are verified through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
-
 ## 0.4.0 Alpha
 
 - Added native scan cancellation through ImageCaptureCore and a visible Cancel control while scanning.
@@ -31,10 +43,6 @@ Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are 
 - Incompatible remembered source/DPI/duplex settings are normalized when changing devices.
 - Scanner diagnostics and support text were retained and updated for the new capability-aware hardware layer.
 - Updated About information and Universal DMG packaging to 0.4.0 Alpha.
-
-### Validation status
-
-Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are verified through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
 
 ## 0.3.0 Alpha
 
