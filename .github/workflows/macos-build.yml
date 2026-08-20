@@ -1,0 +1,93 @@
+name: macOS Alpha Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  arm64:
+    name: Apple Silicon
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show environment
+        run: |
+          uname -m
+          swift --version
+          xcodebuild -version
+      - name: Tests and build
+        run: |
+          swift test
+          swift build -c release
+          BIN_DIR="$(swift build -c release --show-bin-path)"
+          mkdir -p artifact-arm64
+          cp "$BIN_DIR/AMURWEBScanMac" artifact-arm64/AMURWEBScanMac
+          chmod +x artifact-arm64/AMURWEBScanMac
+          file artifact-arm64/AMURWEBScanMac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-arm64
+          path: artifact-arm64/AMURWEBScanMac
+          if-no-files-found: error
+
+  intel:
+    name: Intel
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show environment
+        run: |
+          uname -m
+          swift --version
+          xcodebuild -version
+      - name: Tests and build
+        run: |
+          swift test
+          swift build -c release
+          BIN_DIR="$(swift build -c release --show-bin-path)"
+          mkdir -p artifact-intel
+          cp "$BIN_DIR/AMURWEBScanMac" artifact-intel/AMURWEBScanMac
+          chmod +x artifact-intel/AMURWEBScanMac
+          file artifact-intel/AMURWEBScanMac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-intel
+          path: artifact-intel/AMURWEBScanMac
+          if-no-files-found: error
+
+  universal:
+    name: Universal DMG
+    needs: [arm64, intel]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: binary-arm64
+          path: downloaded/arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: binary-intel
+          path: downloaded/intel
+      - name: Create Universal executable
+        run: |
+          chmod +x downloaded/arm64/AMURWEBScanMac downloaded/intel/AMURWEBScanMac
+          mkdir -p build
+          lipo -create \
+            downloaded/arm64/AMURWEBScanMac \
+            downloaded/intel/AMURWEBScanMac \
+            -output build/AMURWEBScanMac
+          chmod +x build/AMURWEBScanMac
+          lipo -info build/AMURWEBScanMac
+      - name: Package app and DMG
+        run: ./scripts/package-universal.sh "$PWD/build/AMURWEBScanMac" "$PWD/dist"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AMURWEB-Scan-macOS-0.1.0-Alpha-Universal
+          path: |
+            dist/AMURWEB-Scan-macOS-0.1.0-Alpha-Universal.dmg
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
