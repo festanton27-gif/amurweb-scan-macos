@@ -14,7 +14,11 @@ final class ScanViewModel: ObservableObject {
     private let backend: any ScannerBackend
     private let namer = ScanFileNamer()
 
-    init(backend: any ScannerBackend = ScannerHubBackend()) {
+    init() {
+        self.backend = ScannerHubBackend()
+    }
+
+    init(backend: any ScannerBackend) {
         self.backend = backend
     }
 
