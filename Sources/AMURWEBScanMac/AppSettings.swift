@@ -63,6 +63,13 @@ final class AppSettings: ObservableObject {
     }
 
     func t(_ key: String) -> String {
-        L10n.text(key, language: language)
+        let value = L10n.text(key, language: language)
+        guard key == "alpha.notice" else { return value }
+
+        let separator = " · "
+        if let range = value.range(of: separator) {
+            return AppMetadata.displayVersion + String(value[range.lowerBound...])
+        }
+        return AppMetadata.displayVersion + separator + value
     }
 }

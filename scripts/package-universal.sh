@@ -4,11 +4,19 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BINARY="${1:-$ROOT/build/AMURWEBScanMac}"
 OUT_DIR="${2:-$ROOT/dist}"
-VERSION="0.8.0"
+META="$ROOT/Sources/AMURWEBScanMac/AppMetadata.swift"
+VERSION="$(awk -F'"' '/static let version =/ { print $2; exit }' "$META")"
+CHANNEL="$(awk -F'"' '/static let channel =/ { print $2; exit }' "$META")"
+BUILD_NUMBER="9"
 APP_NAME="AMURWEB Scan"
 APP="$OUT_DIR/$APP_NAME.app"
-DMG="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-Alpha-Universal.dmg"
+DMG="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-$CHANNEL-Universal.dmg"
 GUIDE="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-Tester-Guide-RU.md"
+
+if [[ -z "$VERSION" || -z "$CHANNEL" ]]; then
+  echo "Unable to read version/channel from AppMetadata.swift" >&2
+  exit 1
+fi
 
 rm -rf "$OUT_DIR"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -43,7 +51,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleName</key><string>$APP_NAME</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
-    <key>CFBundleVersion</key><string>8</string>
+    <key>CFBundleVersion</key><string>$BUILD_NUMBER</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Amur Web Center (AMURWEB)</string>
