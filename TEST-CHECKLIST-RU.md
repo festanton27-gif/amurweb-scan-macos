@@ -1,16 +1,31 @@
-# AMURWEB Scan macOS 0.8.0 Alpha — чек-лист внешнего теста
+# AMURWEB Scan macOS 0.9.0 Alpha — чек-лист внешнего теста
+
+## Важно перед тестом
+
+Эта Alpha-сборка подписана ad-hoc и пока не нотарифицирована Apple. Она предназначена для внешнего тестирования, а не для публичного Stable-релиза.
+
+1. Открыть DMG и перенести **AMURWEB Scan** в `Applications`.
+2. При первом запуске, если macOS блокирует приложение как неподписанное Developer ID, открыть его через контекстное меню **Открыть / Open**. Если система всё равно блокирует запуск, использовать разрешение **Open Anyway / Всё равно открыть** в Privacy & Security.
+3. Не отключать Gatekeeper глобально.
+4. Убедиться, что в **О программе** отображается `0.9.0 Alpha`.
 
 ## CI без физического Mac
 
 - [ ] Apple Silicon build — success
 - [ ] Intel build — success
 - [ ] Swift tests — success
+- [ ] Apple Silicon binary содержит только arm64 — success
+- [ ] Intel binary содержит только x86_64 — success
 - [ ] правило Mock-устройств: скрыты по умолчанию / доступны по opt-in — success
 - [ ] тест скрытия постоянного ID сканера из support-report — success
 - [ ] тест правила рекламы 10 → 5/2 — success
 - [ ] тест сравнения версий — success
-- [ ] Universal binary — success
-- [ ] DMG — success
+- [ ] Universal binary содержит arm64 + x86_64 — success
+- [ ] `Info.plist` проходит lint и версия совпадает с `AppMetadata` — success
+- [ ] bundle id `ru.amurweb.scan` и minimum macOS 13.0 — success
+- [ ] ad-hoc codesign проходит `codesign --verify --deep --strict` — success
+- [ ] DMG монтируется и содержит `.app` + ссылку Applications — success
+- [ ] SHA-256 готового DMG совпадает с `SHA256SUMS.txt` — success
 - [ ] в artifact присутствуют DMG, SHA256SUMS и этот tester guide
 
 ## Безопасный отчёт для поддержки
