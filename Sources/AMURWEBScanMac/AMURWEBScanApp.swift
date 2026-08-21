@@ -22,6 +22,7 @@ struct AMURWEBScanApp: App {
         Settings {
             SettingsView()
                 .environmentObject(settings)
+                .environmentObject(model)
         }
 
         Window("About AMURWEB Scan", id: "about") {
