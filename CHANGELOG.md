@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.0.0 RC1
+
+- Feature freeze for the first Stable macOS release. No new scanner functionality is planned between RC1 and Stable.
+- Promoted the tested 0.10.0 feature set to the 1.0.0 release-candidate line.
+- Bundle build number advanced to 11.
+- CI and artifact naming moved to `1.0.0 RC1`.
+- Added an optional Developer ID Application signing path to the existing Universal packaging script. RC builds continue to use ad-hoc signing when Developer ID is not configured.
+- Added `scripts/notarize-release.sh` for Apple `notarytool` submission, stapling, Gatekeeper verification and final SHA-256 regeneration.
+- Replaced the Alpha tester checklist with the final Stable-gate checklist covering real Mac/scanner validation, flatbed multi-page PDF, ADF/duplex where available, cancellation, diagnostics, update/promotion behavior and public release signing.
+- Existing release verification remains mandatory: Swift tests, per-architecture checks, Universal verification, Info.plist validation, codesign verification, SHA-256 validation and mounted-DMG inspection.
+- Scanner acquisition, manual flatbed multipage PDF, automatic ADF multipage, duplex, cancellation, support report, session trace, update notifications and AMURWEB ecosystem promotion behavior are functionally unchanged from 0.10.0 Alpha.
+
+### Stable gate
+
+RC1 is code-complete. Public `1.0.0 Stable` requires a successful real Mac + physical scanner test and Developer ID Application signing + Apple notarization. Any RC1 code changes are limited to confirmed release-blocking defects.
+
 ## 0.10.0 Alpha
 
 - Added a privacy-conscious in-memory diagnostic session trace for the current application run.
