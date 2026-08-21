@@ -46,7 +46,7 @@ struct DiagnosticsView: View {
                 .disabled(model.diagnosticText.isEmpty)
 
                 Spacer()
-                Text("AMURWEB Scan 0.7.0 Alpha")
+                Text("AMURWEB Scan \(AppMetadata.displayVersion)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
