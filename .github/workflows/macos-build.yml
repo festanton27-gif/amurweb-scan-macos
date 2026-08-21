@@ -1,4 +1,4 @@
-name: macOS Alpha Build
+name: macOS Release Candidate Build
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: macos-alpha-${{ github.event.pull_request.number || github.ref }}
+  group: macos-rc-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -97,9 +97,9 @@ jobs:
         run: bash scripts/verify-release.sh "$PWD/dist"
       - uses: actions/upload-artifact@v4
         with:
-          name: AMURWEB-Scan-macOS-0.10.0-Alpha-Universal
+          name: AMURWEB-Scan-macOS-1.0.0-RC1-Universal
           path: |
-            dist/AMURWEB-Scan-macOS-0.10.0-Alpha-Universal.dmg
-            dist/AMURWEB-Scan-macOS-0.10.0-Tester-Guide-RU.md
+            dist/AMURWEB-Scan-macOS-1.0.0-RC1-Universal.dmg
+            dist/AMURWEB-Scan-macOS-1.0.0-Tester-Guide-RU.md
             dist/SHA256SUMS.txt
           if-no-files-found: error
