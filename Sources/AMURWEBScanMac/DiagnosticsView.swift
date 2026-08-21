@@ -31,7 +31,7 @@ struct DiagnosticsView: View {
 
             HStack {
                 Button(settings.t("diagnostics.refresh")) {
-                    Task { await model.refreshDiagnostics() }
+                    Task { await refreshSupportReport() }
                 }
                 .disabled(model.diagnosticsBusy)
 
@@ -52,9 +52,20 @@ struct DiagnosticsView: View {
             }
         }
         .padding(22)
-        .frame(width: 760, height: 580)
+        .frame(width: 800, height: 620)
         .task {
-            await model.refreshDiagnostics()
+            await refreshSupportReport()
         }
+    }
+
+    @MainActor
+    private func refreshSupportReport() async {
+        await model.refreshDiagnostics()
+        let backendReport = model.diagnosticText
+        model.diagnosticText = SupportReportBuilder.make(
+            settings: settings,
+            selectedDevice: model.selectedDevice,
+            backendReport: backendReport
+        )
     }
 }

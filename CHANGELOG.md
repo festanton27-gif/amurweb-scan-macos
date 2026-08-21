@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.8.0 Alpha
+
+- Added a single privacy-conscious support report for external testing and technical support.
+- The report includes AMURWEB Scan version, macOS version, CPU architecture, active scan settings and scanner capabilities.
+- The report excludes scanned-document contents, scan file names, document/output-folder paths and persistent scanner identifiers.
+- Added a reusable Core privacy filter that replaces backend `ID:` values with `ID: redacted`.
+- Added unit tests verifying scanner-ID redaction while preserving useful diagnostic data.
+- Updated Scanner diagnostics UI to generate, refresh, copy and save the combined support report.
+- Universal build artifact now contains the DMG, SHA-256 checksum and a versioned Russian external-tester guide.
+- Scanner acquisition, flatbed/ADF multipage scanning, duplex, cancellation, update checks and AMURWEB promotions remain unchanged.
+- Updated RU/EN copy and centralized app version to 0.8.0 Alpha.
+
+### Validation status
+
+Apple Silicon and Intel compilation, Core tests and Universal DMG/tester-package creation are validated through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
+
 ## 0.7.0 Alpha
 
 - Mock Flatbed and Mock ADF are hidden by default so normal users see only real scanners.
@@ -12,10 +28,6 @@
 - Update-check User-Agent and current-version comparison now use the centralized app metadata.
 - Scanner acquisition, manual flatbed multipage PDF, automatic ADF multipage, duplex and cancellation remain unchanged.
 - Updated RU/EN interface text and Universal DMG packaging to 0.7.0 Alpha.
-
-### Validation status
-
-Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are validated through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
 
 ## 0.6.0 Alpha
 
@@ -42,7 +54,6 @@ Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are 
 - Replaced the misleading OFFLINE badge with LOCAL FILES because version/product metadata may now be fetched separately.
 - Updated privacy/legal copy to make clear that scanned documents remain local.
 - Scanner discovery, ImageCaptureCore acquisition, ADF, duplex, multi-page PDF, cancellation and diagnostics behavior remain unchanged from 0.4.0.
-- Updated About, diagnostics footer and Universal DMG packaging to 0.5.0 Alpha.
 
 ## 0.4.0 Alpha
 
@@ -55,7 +66,6 @@ Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are 
 - Standard DPI choices are filtered using scanner-reported capabilities when available.
 - Incompatible remembered source/DPI/duplex settings are normalized when changing devices.
 - Scanner diagnostics and support text were retained and updated for the new capability-aware hardware layer.
-- Updated About information and Universal DMG packaging to 0.4.0 Alpha.
 
 ## 0.3.0 Alpha
 

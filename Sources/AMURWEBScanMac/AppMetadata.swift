@@ -1,7 +1,7 @@
 import Foundation
 
 enum AppMetadata {
-    static let version = "0.7.0"
+    static let version = "0.8.0"
     static let channel = "Alpha"
     static let platform = "macOS"
 
