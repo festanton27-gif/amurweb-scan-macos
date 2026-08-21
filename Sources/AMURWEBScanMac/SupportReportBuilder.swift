@@ -47,25 +47,12 @@ enum SupportReportBuilder {
         }
 
         lines.append("Scanner backend diagnostics")
-        lines.append(sanitizedBackendReport(backendReport))
+        lines.append(DiagnosticPrivacyFilter.sanitize(backendReport))
         lines.append("")
         lines.append("Privacy")
         lines.append("This report does not include scanned document contents, scan file names, document paths, output-folder paths, or persistent scanner identifiers.")
 
         return lines.joined(separator: "\n")
-    }
-
-    private static func sanitizedBackendReport(_ report: String) -> String {
-        report
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { line in
-                let text = String(line)
-                if text.hasPrefix("ID: ") {
-                    return "ID: redacted"
-                }
-                return text
-            }
-            .joined(separator: "\n")
     }
 
     private static var architecture: String {
