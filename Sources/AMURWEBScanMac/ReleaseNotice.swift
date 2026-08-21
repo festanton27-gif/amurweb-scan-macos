@@ -5,9 +5,9 @@ enum ReleaseNotice {
         let detail: String
         switch language {
         case .ru:
-            detail = "диагностический session trace текущего запуска · требуется реальный Mac и сканер"
+            detail = "релиз-кандидат перед Stable · требуется финальная проверка на реальном Mac и сканере"
         case .en:
-            detail = "current-run diagnostic session trace · real Mac and scanner still required"
+            detail = "release candidate before Stable · final real Mac and scanner validation required"
         }
         return "\(AppMetadata.displayVersion) · \(detail)"
     }
