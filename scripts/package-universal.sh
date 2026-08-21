@@ -60,7 +60,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 plutil -lint "$APP/Contents/Info.plist"
-codesign --force --deep --sign - "$APP"
+
+if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
+  echo "Signing with Developer ID: $DEVELOPER_ID_APPLICATION"
+  codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP"
+else
+  echo "Developer ID not configured; using ad-hoc signature for RC/testing."
+  codesign --force --sign - "$APP"
+fi
 codesign --verify --deep --strict "$APP"
 
 STAGE="$OUT_DIR/dmg-stage"
