@@ -4,10 +4,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BINARY="${1:-$ROOT/build/AMURWEBScanMac}"
 OUT_DIR="${2:-$ROOT/dist}"
-VERSION="0.7.0"
+VERSION="0.8.0"
 APP_NAME="AMURWEB Scan"
 APP="$OUT_DIR/$APP_NAME.app"
 DMG="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-Alpha-Universal.dmg"
+GUIDE="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-Tester-Guide-RU.md"
 
 rm -rf "$OUT_DIR"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
@@ -42,7 +43,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleName</key><string>$APP_NAME</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
-    <key>CFBundleVersion</key><string>7</string>
+    <key>CFBundleVersion</key><string>8</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Amur Web Center (AMURWEB)</string>
@@ -67,6 +68,8 @@ hdiutil create \
   "$DMG"
 
 rm -rf "$STAGE"
+cp "$ROOT/TEST-CHECKLIST-RU.md" "$GUIDE"
 shasum -a 256 "$DMG" > "$OUT_DIR/SHA256SUMS.txt"
 
 echo "Created: $DMG"
+echo "Tester guide: $GUIDE"
