@@ -1,42 +1,44 @@
-# AMURWEB Scan for macOS 0.10.0 Alpha
+# AMURWEB Scan for macOS 1.0.0 RC1
 
-Native macOS branch of the free AMURWEB Scan document scanner.
+Native macOS edition of the free AMURWEB Scan document scanner.
 
-## 0.10.0 Alpha
+## 1.0.0 RC1
 
-This build improves real-hardware troubleshooting before Beta without changing the ImageCaptureCore acquisition pipeline.
+This is the feature-frozen release candidate for the first Stable macOS release. No new scanner features are planned between RC1 and Stable; only issues found during final hardware validation or release signing may be fixed.
 
-Implemented and retained:
+Implemented:
 
 - native SwiftUI interface for macOS 13+;
 - Russian and English UI;
-- real scanner discovery through ImageCaptureCore;
+- scanner discovery and acquisition through Apple ImageCaptureCore;
 - Automatic / Flatbed / ADF source selection;
-- manual multi-page PDF from an ordinary flatbed scanner;
+- JPG, PNG and PDF output;
+- manual multi-page PDF from an ordinary flatbed scanner without ADF;
 - automatic multi-page PDF from ADF jobs;
-- duplex request for supported ADF devices;
 - sequential multi-page JPG/PNG output for ADF jobs;
+- duplex request when reported by the selected feeder;
 - native scan cancellation;
-- Mock scanners hidden by default with an explicit Settings opt-in;
-- clear no-scanner state and Finder reveal for the latest result;
+- Finder folder selection, persistent settings and sequential file naming;
+- Mock scanners hidden by default and available only through explicit test mode;
+- Finder reveal for the latest scan result;
 - privacy-conscious support report with persistent scanner IDs redacted;
-- new in-memory session trace for the current application run;
-- trace records device refresh, safe hardware discovery errors, scan start/completion, output count, cancellation request and diagnostics generation;
-- trace scan details are limited to scanner display name, mock/hardware kind, source, DPI, format and duplex;
-- error trace stores only error domain and numeric code, not localized error text or file paths;
-- trace is capped at 160 entries, is not persisted between launches and is included only when the user views/copies/saves the support report;
-- release notice text is generated from current `AppMetadata` rather than an old version string in localization resources;
-- update notifications and AMURWEB ecosystem promotions remain isolated from scanning;
-- hardened release pipeline from 0.9.0 remains active: architecture assertions, synchronized version checks, `Info.plist`, codesign, SHA-256 and mounted-DMG validation;
-- tester artifact contains DMG, SHA-256 and the versioned Russian tester guide.
+- in-memory current-run diagnostic session trace without document contents or paths;
+- update notifications from the AMURWEB endpoint;
+- AMURWEB ecosystem promotion cycle: first 10 launches without promotion, then repeating 5 with / 2 without;
+- no impression/click telemetry;
+- Apple Silicon and Intel builds combined into one Universal application;
+- release verification for architectures, Info.plist, signature, SHA-256 and mounted DMG contents.
 
 Scanned documents remain local. Network access is limited to version metadata and the optional AMURWEB product catalog.
 
-## Validation status
+## Stable gate
 
-GitHub Actions validates compilation on Apple Silicon and Intel, Swift tests, privacy-filter tests, Universal packaging and the final DMG release structure. The session trace is compiled on both architectures, but physical scanner behavior still requires an external Mac + scanner test before Beta.
+RC1 is code-complete. Two external checks remain before the public Stable label:
 
-The Alpha uses ad-hoc signing. Stable public distribution will require Developer ID signing and Apple notarization. Do not disable Gatekeeper globally for Alpha testing.
+1. A real Mac + physical scanner must complete the external hardware checklist, including single-page scans, manual flatbed multi-page PDF, cancellation, and ADF/duplex where the test scanner supports them.
+2. Public distribution must use a Developer ID Application signature and Apple notarization. The packaging script supports Developer ID through `DEVELOPER_ID_APPLICATION`; `scripts/notarize-release.sh` performs `notarytool`, stapling and Gatekeeper verification once Apple credentials are configured.
+
+RC/testing builds fall back to an ad-hoc signature when Developer ID is not configured. Do not disable Gatekeeper globally for testing.
 
 ## Build
 
@@ -45,14 +47,21 @@ swift test
 swift build -c release
 ```
 
-The Universal CI job additionally runs:
+Universal packaging:
 
 ```bash
+bash scripts/package-universal.sh "$PWD/build/AMURWEBScanMac" "$PWD/dist"
 bash scripts/verify-release.sh "$PWD/dist"
 ```
 
-GitHub Actions creates the tester artifact containing:
+For a Developer ID build set `DEVELOPER_ID_APPLICATION` before packaging. After configuring a `notarytool` keychain profile, set `NOTARYTOOL_PROFILE` and run:
 
-- `AMURWEB-Scan-macOS-0.10.0-Alpha-Universal.dmg`
-- `AMURWEB-Scan-macOS-0.10.0-Tester-Guide-RU.md`
+```bash
+bash scripts/notarize-release.sh "$PWD/dist"
+```
+
+GitHub Actions creates the RC tester artifact containing:
+
+- `AMURWEB-Scan-macOS-1.0.0-RC1-Universal.dmg`
+- `AMURWEB-Scan-macOS-1.0.0-Tester-Guide-RU.md`
 - `SHA256SUMS.txt`
