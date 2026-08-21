@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0 Alpha
+
+- Mock Flatbed and Mock ADF are hidden by default so normal users see only real scanners.
+- Added **Show test scanners** setting for explicit hardware-independent testing.
+- Added a dedicated no-scanner UI state with refresh guidance and quick test-scanner opt-in.
+- Added unit tests verifying that Mock devices are hidden normally and restored when test mode is enabled.
+- Added **Show result in Finder** for the most recent scan output.
+- Scanner diagnostics can now be saved directly as a UTF-8 `.txt` report in addition to being copied.
+- Centralized Swift-side version/channel/platform metadata in `AppMetadata` to avoid inconsistent version labels.
+- Update-check User-Agent and current-version comparison now use the centralized app metadata.
+- Scanner acquisition, manual flatbed multipage PDF, automatic ADF multipage, duplex and cancellation remain unchanged.
+- Updated RU/EN interface text and Universal DMG packaging to 0.7.0 Alpha.
+
+### Validation status
+
+Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are validated through GitHub Actions. Physical scanner behavior still requires an external Mac + scanner test before Beta.
+
 ## 0.6.0 Alpha
 
 - Added manual multi-page PDF scanning for ordinary flatbed scanners without an ADF.
@@ -11,10 +28,6 @@
 - Existing automatic ADF multipage PDF, duplex, JPG/PNG multipage output, cancellation, diagnostics and scanner acquisition paths remain unchanged.
 - Retained 0.5.0 update notifications and AMURWEB ecosystem promotion behavior.
 - Updated RU/EN UI, About information and Universal DMG packaging to 0.6.0 Alpha.
-
-### Validation status
-
-Apple Silicon and Intel compilation, unit tests and Universal DMG packaging are verified through GitHub Actions. Physical flatbed/ADF behavior still requires an external Mac + scanner test before Beta.
 
 ## 0.5.0 Alpha
 
