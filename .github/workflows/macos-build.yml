@@ -71,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate release scripts
-        run: bash -n scripts/package-universal.sh scripts/verify-release.sh
+        run: bash -n scripts/package-universal.sh scripts/verify-release.sh scripts/notarize-release.sh
       - uses: actions/download-artifact@v4
         with:
           name: binary-arm64
