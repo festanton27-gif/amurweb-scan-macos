@@ -40,14 +40,19 @@ struct DiagnosticsView: View {
                 }
                 .disabled(model.diagnosticText.isEmpty)
 
+                Button(settings.t("diagnostics.save")) {
+                    model.saveDiagnostics(settings: settings)
+                }
+                .disabled(model.diagnosticText.isEmpty)
+
                 Spacer()
-                Text("AMURWEB Scan 0.6.0 Alpha")
+                Text("AMURWEB Scan \(AppMetadata.displayVersion)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .padding(22)
-        .frame(width: 720, height: 560)
+        .frame(width: 760, height: 580)
         .task {
             await model.refreshDiagnostics()
         }

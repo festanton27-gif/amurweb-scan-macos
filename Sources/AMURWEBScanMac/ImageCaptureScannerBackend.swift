@@ -72,7 +72,7 @@ final class ImageCaptureScannerBackend: NSObject, ScannerBackend, @preconcurrenc
         try? await Task.sleep(nanoseconds: 700_000_000)
 
         var lines: [String] = [
-            "AMURWEB Scan macOS 0.6.0 Alpha",
+            "AMURWEB Scan \(AppMetadata.fullDisplayVersion)",
             "Backend: ImageCaptureCore",
             "Detected hardware scanners: \(scanners.count)",
             ""

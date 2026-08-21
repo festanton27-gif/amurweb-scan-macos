@@ -9,7 +9,7 @@ struct ContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             sidebar
-                .frame(width: 370)
+                .frame(width: 380)
             Divider()
             preview
         }
@@ -35,85 +35,11 @@ struct ContentView: View {
             statusBadges
 
             GroupBox {
-                VStack(alignment: .leading, spacing: 11) {
-                    fieldLabel(settings.t("scanner"))
-                    Picker("", selection: Binding(
-                        get: { model.selectedDeviceID ?? "" },
-                        set: {
-                            model.selectedDeviceID = $0
-                            settings.lastScannerID = $0
-                            model.statusKey = model.selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
-                            normalizeSettingsForSelectedDevice()
-                        }
-                    )) {
-                        ForEach(model.devices) { device in
-                            Text(device.name).tag(device.id)
-                        }
-                    }
-                    .labelsHidden()
-
-                    fieldLabel(settings.t("source"))
-                    Picker("", selection: $settings.scanSource) {
-                        ForEach(availableSources) { source in
-                            Text(sourceTitle(source)).tag(source)
-                        }
-                    }
-                    .labelsHidden()
-                    .onChange(of: settings.scanSource) { source in
-                        if source != .documentFeeder || model.selectedDevice?.supportsDuplex == false {
-                            settings.duplexEnabled = false
-                        }
-                        if source == .documentFeeder {
-                            settings.manualMultiPagePDF = false
-                        }
-                    }
-
-                    Toggle(settings.t("duplex"), isOn: $settings.duplexEnabled)
-                        .disabled(settings.scanSource != .documentFeeder || model.selectedDevice?.supportsDuplex == false)
-
-                    fieldLabel(settings.t("resolution"))
-                    Picker("", selection: $settings.selectedDPI) {
-                        ForEach(availableDPIChoices, id: \.self) { dpi in
-                            Text("\(dpi) DPI").tag(dpi)
-                        }
-                    }
-                    .labelsHidden()
-
-                    fieldLabel(settings.t("mode"))
-                    Picker("", selection: $settings.colorMode) {
-                        Text(settings.t("color")).tag(ScanColorMode.color)
-                        Text(settings.t("grayscale")).tag(ScanColorMode.grayscale)
-                        Text(settings.t("bw")).tag(ScanColorMode.blackAndWhite)
-                    }
-                    .labelsHidden()
-
-                    fieldLabel(settings.t("format"))
-                    Picker("", selection: $settings.format) {
-                        Text("JPG").tag(ScanFormat.jpg)
-                        Text("PNG").tag(ScanFormat.png)
-                        Text("PDF").tag(ScanFormat.pdf)
-                    }
-                    .labelsHidden()
-                    .onChange(of: settings.format) { format in
-                        if format != .pdf {
-                            settings.manualMultiPagePDF = false
-                        }
-                    }
-
-                    Toggle(settings.t("multipage.manual"), isOn: $settings.manualMultiPagePDF)
-                        .disabled(settings.format != .pdf || settings.scanSource == .documentFeeder)
-
-                    if settings.scanSource == .documentFeeder {
-                        Text(settings.t("multipage.adfAuto"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else if settings.manualMultiPagePDF {
-                        Text(settings.t("multipage.manualNote"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                if model.devices.isEmpty {
+                    noScannerState
+                } else {
+                    scannerControls
                 }
-                .padding(4)
             }
             .disabled(model.isBusy)
 
@@ -189,7 +115,7 @@ struct ContentView: View {
 
             HStack(spacing: 8) {
                 Circle()
-                    .fill(model.isBusy ? Color.orange : Color.green)
+                    .fill(statusColor)
                     .frame(width: 8, height: 8)
                 Text(settings.t(model.statusKey))
                     .font(.caption)
@@ -199,6 +125,135 @@ struct ContentView: View {
         }
         .padding(18)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.7))
+    }
+
+    private var noScannerState: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "scanner.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(settings.t("scanner.none.title"))
+                        .font(.headline)
+                    Text(settings.t("scanner.none.body"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Button(settings.t("refresh")) {
+                Task { await model.refresh(settings: settings) }
+            }
+            .frame(maxWidth: .infinity)
+
+            if !settings.showTestScanners {
+                Button(settings.t("scanner.enableTest")) {
+                    settings.showTestScanners = true
+                    Task { await model.refresh(settings: settings) }
+                }
+                .buttonStyle(.link)
+            }
+        }
+        .padding(6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var scannerControls: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            fieldLabel(settings.t("scanner"))
+            Picker("", selection: Binding(
+                get: { model.selectedDeviceID ?? "" },
+                set: {
+                    model.selectedDeviceID = $0
+                    settings.lastScannerID = $0
+                    if let device = model.selectedDevice {
+                        model.statusKey = device.isMock ? "status.mock" : "status.hardware"
+                    }
+                    normalizeSettingsForSelectedDevice()
+                }
+            )) {
+                ForEach(model.devices) { device in
+                    HStack {
+                        Text(device.name)
+                        if device.isMock {
+                            Text("MOCK")
+                        }
+                    }
+                    .tag(device.id)
+                }
+            }
+            .labelsHidden()
+
+            fieldLabel(settings.t("source"))
+            Picker("", selection: $settings.scanSource) {
+                ForEach(availableSources) { source in
+                    Text(sourceTitle(source)).tag(source)
+                }
+            }
+            .labelsHidden()
+            .onChange(of: settings.scanSource) { source in
+                if source != .documentFeeder || model.selectedDevice?.supportsDuplex == false {
+                    settings.duplexEnabled = false
+                }
+                if source == .documentFeeder {
+                    settings.manualMultiPagePDF = false
+                }
+            }
+
+            Toggle(settings.t("duplex"), isOn: $settings.duplexEnabled)
+                .disabled(settings.scanSource != .documentFeeder || model.selectedDevice?.supportsDuplex == false)
+
+            fieldLabel(settings.t("resolution"))
+            Picker("", selection: $settings.selectedDPI) {
+                ForEach(availableDPIChoices, id: \.self) { dpi in
+                    Text("\(dpi) DPI").tag(dpi)
+                }
+            }
+            .labelsHidden()
+
+            fieldLabel(settings.t("mode"))
+            Picker("", selection: $settings.colorMode) {
+                Text(settings.t("color")).tag(ScanColorMode.color)
+                Text(settings.t("grayscale")).tag(ScanColorMode.grayscale)
+                Text(settings.t("bw")).tag(ScanColorMode.blackAndWhite)
+            }
+            .labelsHidden()
+
+            fieldLabel(settings.t("format"))
+            Picker("", selection: $settings.format) {
+                Text("JPG").tag(ScanFormat.jpg)
+                Text("PNG").tag(ScanFormat.png)
+                Text("PDF").tag(ScanFormat.pdf)
+            }
+            .labelsHidden()
+            .onChange(of: settings.format) { format in
+                if format != .pdf {
+                    settings.manualMultiPagePDF = false
+                }
+            }
+
+            Toggle(settings.t("multipage.manual"), isOn: $settings.manualMultiPagePDF)
+                .disabled(settings.format != .pdf || settings.scanSource == .documentFeeder)
+
+            if settings.scanSource == .documentFeeder {
+                Text(settings.t("multipage.adfAuto"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if settings.manualMultiPagePDF {
+                Text(settings.t("multipage.manualNote"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(4)
+    }
+
+    private var statusColor: Color {
+        if model.isBusy { return .orange }
+        if model.selectedDevice == nil { return .gray }
+        return .green
     }
 
     private var availableSources: [ScanSource] {
@@ -281,10 +336,10 @@ struct ContentView: View {
             badge(settings.t("badge.free"), color: .green)
             badge(settings.t("badge.offline"), color: .blue)
             badge(settings.t("badge.mac"), color: .gray)
-            if model.selectedDevice?.isMock == true {
-                badge(settings.t("badge.mock"), color: .orange)
+            if let device = model.selectedDevice {
+                badge(settings.t(device.isMock ? "badge.mock" : "badge.hardware"), color: .orange)
             } else {
-                badge(settings.t("badge.hardware"), color: .orange)
+                badge(settings.t("badge.noScanner"), color: .gray)
             }
             Spacer()
         }
@@ -317,6 +372,13 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+
+                if !model.lastOutputURLs.isEmpty {
+                    Button(settings.t("result.reveal")) {
+                        model.revealLastOutput()
+                    }
+                }
+
                 Button(settings.t("refresh")) {
                     Task {
                         await model.refresh(settings: settings)
@@ -344,7 +406,7 @@ struct ContentView: View {
                             .foregroundStyle(.orange)
                         Text(settings.t("preview.empty.title"))
                             .font(.title3.weight(.semibold))
-                        Text(settings.t("preview.empty.body"))
+                        Text(model.devices.isEmpty ? settings.t("preview.noScanner.body") : settings.t("preview.empty.body"))
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .frame(maxWidth: 520)

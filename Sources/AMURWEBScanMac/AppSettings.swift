@@ -13,6 +13,7 @@ final class AppSettings: ObservableObject {
     @Published var outputFolder: URL? { didSet { defaults.set(outputFolder?.path, forKey: Keys.folder) } }
     @Published var lastScannerID: String? { didSet { defaults.set(lastScannerID, forKey: Keys.scanner) } }
     @Published var automaticUpdateChecks: Bool { didSet { defaults.set(automaticUpdateChecks, forKey: Keys.automaticUpdateChecks) } }
+    @Published var showTestScanners: Bool { didSet { defaults.set(showTestScanners, forKey: Keys.showTestScanners) } }
 
     private let defaults: UserDefaults
 
@@ -27,6 +28,7 @@ final class AppSettings: ObservableObject {
         static let folder = "folder"
         static let scanner = "scanner"
         static let automaticUpdateChecks = "automaticUpdateChecks"
+        static let showTestScanners = "showTestScanners"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -57,6 +59,7 @@ final class AppSettings: ObservableObject {
         automaticUpdateChecks = defaults.object(forKey: Keys.automaticUpdateChecks) == nil
             ? true
             : defaults.bool(forKey: Keys.automaticUpdateChecks)
+        showTestScanners = defaults.bool(forKey: Keys.showTestScanners)
     }
 
     func t(_ key: String) -> String {

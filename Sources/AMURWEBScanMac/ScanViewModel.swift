@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 import AMURWEBScanCore
 
 @MainActor
@@ -8,7 +9,7 @@ final class ScanViewModel: ObservableObject {
     @Published var selectedDeviceID: String?
     @Published var isBusy = false
     @Published var isCancelling = false
-    @Published var statusKey = "status.mock"
+    @Published var statusKey = "status.ready"
     @Published var previewURL: URL?
     @Published var lastOutputURLs: [URL] = []
     @Published var diagnosticText = ""
@@ -34,15 +35,30 @@ final class ScanViewModel: ObservableObject {
         isBusy = true
         defer { isBusy = false }
         do {
-            devices = try await backend.listDevices()
-            if let remembered = settings.lastScannerID, devices.contains(where: { $0.id == remembered }) {
+            let discovered = try await backend.listDevices()
+            devices = ScannerVisibilityPolicy.visibleDevices(
+                from: discovered,
+                includeTestDevices: settings.showTestScanners
+            )
+
+            if let remembered = settings.lastScannerID,
+               devices.contains(where: { $0.id == remembered }) {
                 selectedDeviceID = remembered
             } else {
                 selectedDeviceID = devices.first?.id
             }
+
             settings.lastScannerID = selectedDeviceID
-            statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
+            if let selectedDevice {
+                statusKey = selectedDevice.isMock ? "status.mock" : "status.hardware"
+            } else {
+                statusKey = "status.noScanner"
+            }
         } catch {
+            devices = []
+            selectedDeviceID = nil
+            settings.lastScannerID = nil
+            statusKey = "status.noScanner"
             errorMessage = friendlyError(error, language: settings.language)
         }
     }
@@ -57,6 +73,25 @@ final class ScanViewModel: ObservableObject {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(diagnosticText, forType: .string)
+    }
+
+    func saveDiagnostics(settings: AppSettings) {
+        guard !diagnosticText.isEmpty else { return }
+
+        let panel = NSSavePanel()
+        panel.canCreateDirectories = true
+        panel.allowedContentTypes = [.plainText]
+        panel.nameFieldStringValue = "AMURWEB-Scan-Diagnostics-\(AppMetadata.version).txt"
+        panel.title = settings.t("diagnostics.save")
+        panel.prompt = settings.t("diagnostics.saveButton")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            try diagnosticText.write(to: url, atomically: true, encoding: .utf8)
+        } catch {
+            errorMessage = settings.t("diagnostics.saveError") + "\n\n" + error.localizedDescription
+        }
     }
 
     func scan(settings: AppSettings) async {
@@ -110,7 +145,11 @@ final class ScanViewModel: ObservableObject {
             statusKey = "status.cancelled"
         } catch {
             errorMessage = friendlyError(error, language: settings.language)
-            statusKey = selectedDevice?.isMock == true ? "status.mock" : "status.hardware"
+            if let selectedDevice {
+                statusKey = selectedDevice.isMock ? "status.mock" : "status.hardware"
+            } else {
+                statusKey = "status.noScanner"
+            }
         }
     }
 
@@ -223,6 +262,11 @@ final class ScanViewModel: ObservableObject {
     func openOutputFolder(settings: AppSettings) {
         guard let folder = settings.outputFolder else { return }
         NSWorkspace.shared.open(folder)
+    }
+
+    func revealLastOutput() {
+        guard !lastOutputURLs.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(lastOutputURLs)
     }
 
     private func friendlyError(_ error: Error, language: AppLanguage) -> String {
