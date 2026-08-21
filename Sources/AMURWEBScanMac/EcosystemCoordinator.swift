@@ -48,7 +48,7 @@ struct AppNotice: Identifiable {
 
 @MainActor
 final class EcosystemCoordinator: ObservableObject {
-    static let currentVersion = "0.6.0"
+    static let currentVersion = "0.7.0"
 
     @Published var promotion: PromotionPresentation?
     @Published var notice: AppNotice?
