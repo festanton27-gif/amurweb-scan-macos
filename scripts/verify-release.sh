@@ -11,6 +11,9 @@ APP="$OUT_DIR/$APP_NAME.app"
 DMG="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-$CHANNEL-Universal.dmg"
 GUIDE="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-Tester-Guide-RU.md"
 SUMS="$OUT_DIR/SHA256SUMS.txt"
+WORKFLOW="$ROOT/.github/workflows/macos-build.yml"
+README="$ROOT/README.md"
+SOURCE_GUIDE="$ROOT/TEST-CHECKLIST-RU.md"
 
 fail() {
   echo "RELEASE VERIFY FAILED: $*" >&2
@@ -19,6 +22,19 @@ fail() {
 
 [[ -n "$VERSION" ]] || fail "version is empty"
 [[ -n "$CHANNEL" ]] || fail "channel is empty"
+
+# Catch stale release labels before validating the binary package.
+grep -Fq "# AMURWEB Scan for macOS $VERSION $CHANNEL" "$README" \
+  || fail "README version/channel is not synchronized with AppMetadata"
+grep -Fq "# AMURWEB Scan macOS $VERSION $CHANNEL" "$SOURCE_GUIDE" \
+  || fail "tester guide version/channel is not synchronized with AppMetadata"
+grep -Fq "name: AMURWEB-Scan-macOS-$VERSION-$CHANNEL-Universal" "$WORKFLOW" \
+  || fail "workflow artifact name is not synchronized with AppMetadata"
+grep -Fq "dist/AMURWEB-Scan-macOS-$VERSION-$CHANNEL-Universal.dmg" "$WORKFLOW" \
+  || fail "workflow DMG upload path is not synchronized with AppMetadata"
+grep -Fq "dist/AMURWEB-Scan-macOS-$VERSION-Tester-Guide-RU.md" "$WORKFLOW" \
+  || fail "workflow tester-guide path is not synchronized with AppMetadata"
+
 [[ -d "$APP" ]] || fail "app bundle missing: $APP"
 [[ -f "$DMG" ]] || fail "DMG missing: $DMG"
 [[ -f "$GUIDE" ]] || fail "tester guide missing: $GUIDE"
@@ -51,7 +67,7 @@ ACTUAL_SHA="$(shasum -a 256 "$DMG" | awk '{print $1}')"
 [[ -n "$EXPECTED_SHA" ]] || fail "SHA256SUMS.txt has no digest"
 [[ "$EXPECTED_SHA" == "$ACTUAL_SHA" ]] || fail "DMG SHA-256 mismatch"
 
-grep -q "$VERSION" "$GUIDE" || fail "tester guide does not mention current version $VERSION"
+grep -Fq "$VERSION $CHANNEL" "$GUIDE" || fail "packaged tester guide does not mention current version/channel"
 
 MOUNT_DIR="$(mktemp -d /tmp/amurweb-scan-verify.XXXXXX)"
 cleanup() {
