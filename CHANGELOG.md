@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.0 Alpha
+
+- Added a release-verification gate for the final packaged macOS artifact.
+- Packaging now derives the application version from `AppMetadata` instead of keeping a second hardcoded package version.
+- Visible Alpha version text now follows `AppMetadata` automatically, preventing stale UI version labels.
+- Apple Silicon CI explicitly verifies an `arm64` executable and Intel CI verifies `x86_64`.
+- Universal packaging explicitly verifies that the final executable contains both `arm64` and `x86_64` architectures.
+- Added `scripts/verify-release.sh` to validate `Info.plist`, bundle version, build number, bundle identifier and minimum macOS version.
+- Release verification checks the packaged app with `codesign --verify --deep --strict`.
+- Release verification validates the DMG SHA-256 against `SHA256SUMS.txt`.
+- CI mounts the completed DMG and verifies that it contains the application, an `Applications` symlink and the expected Universal executable.
+- Updated the external tester guide with safe first-launch guidance for the current ad-hoc signed Alpha build.
+- Scanner acquisition, flatbed/ADF multipage scanning, duplex, cancellation, support reports, update checks and AMURWEB promotions remain unchanged.
+
+### Validation status
+
+This version is intended to make CI/package validation substantially closer to the checks required for a distributable build. Physical scanner behavior still requires an external Mac + scanner test before Beta. Stable public distribution additionally requires Developer ID signing and Apple notarization.
+
 ## 0.8.0 Alpha
 
 - Added a single privacy-conscious support report for external testing and technical support.
