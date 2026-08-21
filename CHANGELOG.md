@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.10.0 Alpha
+
+- Added a privacy-conscious in-memory diagnostic session trace for the current application run.
+- The trace records high-level device refresh, hardware discovery failure, scan start/completion, cancellation request and diagnostics events without modifying ImageCaptureCore acquisition internals.
+- Scan trace details are limited to scanner display name, mock/hardware kind, source, DPI, output format, duplex flag and output count.
+- Failure events store only the NSError domain and numeric code; localized error text and file paths are intentionally excluded from the trace.
+- Session trace values are normalized to one line, truncated to a bounded length and retained in a 160-entry in-memory ring buffer.
+- The trace is not persisted between application launches and appears only in the support report viewed, copied or saved by the user.
+- Manual flatbed multipage sessions naturally produce per-page scan lifecycle events because each physical page uses a separate backend scan request.
+- Added a dedicated `ReleaseNotice` so the visible Alpha version always follows `AppMetadata` while the RU/EN release description can change independently.
+- Bundle build number advanced to 10; Universal artifact and tester guide moved to 0.10.0.
+- Release-hardening checks introduced in 0.9.0 remain active.
+- Scanner acquisition, flatbed/ADF multipage scanning, duplex, cancellation, update checks and AMURWEB promotions remain functionally unchanged.
+
+### Validation status
+
+Apple Silicon and Intel compilation, Swift tests, privacy-filter tests, Universal packaging and final mounted-DMG verification are performed by GitHub Actions. Session trace behavior can be exercised with Mock Scanner, but physical scanner behavior still requires an external Mac + scanner test before Beta.
+
 ## 0.9.0 Alpha
 
 - Added a release-verification gate for the final packaged macOS artifact.

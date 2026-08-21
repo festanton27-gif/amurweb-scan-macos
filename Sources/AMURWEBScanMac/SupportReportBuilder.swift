@@ -49,8 +49,11 @@ enum SupportReportBuilder {
         lines.append("Scanner backend diagnostics")
         lines.append(DiagnosticPrivacyFilter.sanitize(backendReport))
         lines.append("")
+        lines.append("Application session trace (current run)")
+        lines.append(DiagnosticSessionTrace.shared.snapshot())
+        lines.append("")
         lines.append("Privacy")
-        lines.append("This report does not include scanned document contents, scan file names, document paths, output-folder paths, or persistent scanner identifiers.")
+        lines.append("This report does not include scanned document contents, scan file names, document paths, output-folder paths, or persistent scanner identifiers. The session trace is kept only in memory for the current application run and is included only when the user copies or saves this report.")
 
         return lines.joined(separator: "\n")
     }
