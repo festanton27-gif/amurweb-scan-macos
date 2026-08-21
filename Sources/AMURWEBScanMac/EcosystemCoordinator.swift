@@ -48,7 +48,7 @@ struct AppNotice: Identifiable {
 
 @MainActor
 final class EcosystemCoordinator: ObservableObject {
-    static let currentVersion = "0.7.0"
+    static let currentVersion = AppMetadata.version
 
     @Published var promotion: PromotionPresentation?
     @Published var notice: AppNotice?
@@ -221,7 +221,7 @@ final class EcosystemCoordinator: ObservableObject {
         var request = URLRequest(url: url)
         request.timeoutInterval = 4
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("AMURWEB Scan macOS/\(Self.currentVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue(AppMetadata.userAgent, forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
