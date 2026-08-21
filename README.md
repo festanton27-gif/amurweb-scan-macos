@@ -1,10 +1,10 @@
-# AMURWEB Scan for macOS 0.6.0 Alpha
+# AMURWEB Scan for macOS 0.7.0 Alpha
 
 Native macOS branch of the free AMURWEB Scan document scanner.
 
-## 0.6.0 Alpha
+## 0.7.0 Alpha
 
-This build closes another functional gap with the Windows edition by adding manual multi-page PDF scanning for ordinary flatbed scanners without an ADF.
+This build focuses on public-facing UI polish and external-test readiness without changing the ImageCaptureCore acquisition pipeline.
 
 Implemented:
 
@@ -12,21 +12,21 @@ Implemented:
 - Russian and English UI;
 - real scanner discovery through ImageCaptureCore;
 - Automatic / Flatbed / ADF source selection;
-- manual multi-page PDF from a flatbed scanner: scan page → Next page → Finish → one PDF;
-- Automatic source prefers Flatbed for the manual multi-page workflow when the scanner reports a flatbed unit;
-- temporary page images are kept outside the selected document folder and deleted after the session;
-- only the final PDF consumes the normal `Скан/Scan - YYYY-MM-DD - NNN` sequence;
-- automatic multi-page ADF scanning remains unchanged;
+- manual multi-page PDF from an ordinary flatbed scanner;
+- automatic multi-page PDF from ADF jobs;
 - duplex request for supported ADF devices;
 - sequential multi-page JPG/PNG output for ADF jobs;
 - native scan cancellation;
 - scanner capability-aware source/DPI/duplex controls;
-- Scanner diagnostics window;
-- Mock flatbed and Mock ADF;
+- Mock Flatbed and Mock ADF are now hidden by default;
+- virtual test scanners can be explicitly enabled in Settings;
+- clearer no-scanner state for normal users;
+- latest scan can be revealed directly in Finder;
+- Scanner diagnostics can be refreshed, copied or exported as a `.txt` report;
+- Swift-side application version metadata is centralized in `AppMetadata`;
 - Finder folder selection and persistent settings;
-- update notifications from the AMURWEB update endpoint, at most once per day;
+- update notifications from the AMURWEB endpoint, at most once per day;
 - manual **Check for updates** command;
-- automatic update checks can be disabled in Settings;
 - AMURWEB ecosystem promotion schedule: first 10 launches without promotion, then repeating 5 launches with / 2 without;
 - promotion catalog cached for 24 hours; no impression/click telemetry;
 - unavailable update/promotion server never blocks scanning;
@@ -49,4 +49,4 @@ swift build -c release
 
 GitHub Actions creates:
 
-`AMURWEB-Scan-macOS-0.6.0-Alpha-Universal.dmg`
+`AMURWEB-Scan-macOS-0.7.0-Alpha-Universal.dmg`
