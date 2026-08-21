@@ -7,7 +7,7 @@ OUT_DIR="${2:-$ROOT/dist}"
 META="$ROOT/Sources/AMURWEBScanMac/AppMetadata.swift"
 VERSION="$(awk -F'"' '/static let version =/ { print $2; exit }' "$META")"
 CHANNEL="$(awk -F'"' '/static let channel =/ { print $2; exit }' "$META")"
-BUILD_NUMBER="10"
+BUILD_NUMBER="11"
 APP_NAME="AMURWEB Scan"
 APP="$OUT_DIR/$APP_NAME.app"
 DMG="$OUT_DIR/AMURWEB-Scan-macOS-$VERSION-$CHANNEL-Universal.dmg"
@@ -60,7 +60,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 plutil -lint "$APP/Contents/Info.plist"
-codesign --force --deep --sign - "$APP"
+
+if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
+  echo "Signing with Developer ID: $DEVELOPER_ID_APPLICATION"
+  codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID_APPLICATION" "$APP"
+else
+  echo "Developer ID not configured; using ad-hoc signature for RC/testing."
+  codesign --force --sign - "$APP"
+fi
 codesign --verify --deep --strict "$APP"
 
 STAGE="$OUT_DIR/dmg-stage"
