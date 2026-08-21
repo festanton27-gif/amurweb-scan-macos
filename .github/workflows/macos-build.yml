@@ -31,6 +31,7 @@ jobs:
           cp "$BIN_DIR/AMURWEBScanMac" artifact-arm64/AMURWEBScanMac
           chmod +x artifact-arm64/AMURWEBScanMac
           file artifact-arm64/AMURWEBScanMac
+          test "$(lipo -archs artifact-arm64/AMURWEBScanMac)" = "arm64"
       - uses: actions/upload-artifact@v4
         with:
           name: binary-arm64
@@ -56,6 +57,7 @@ jobs:
           cp "$BIN_DIR/AMURWEBScanMac" artifact-intel/AMURWEBScanMac
           chmod +x artifact-intel/AMURWEBScanMac
           file artifact-intel/AMURWEBScanMac
+          test "$(lipo -archs artifact-intel/AMURWEBScanMac)" = "x86_64"
       - uses: actions/upload-artifact@v4
         with:
           name: binary-intel
@@ -86,13 +88,16 @@ jobs:
             -output build/AMURWEBScanMac
           chmod +x build/AMURWEBScanMac
           lipo -info build/AMURWEBScanMac
+          lipo -verify_arch arm64 x86_64 build/AMURWEBScanMac
       - name: Package app and DMG
         run: bash scripts/package-universal.sh "$PWD/build/AMURWEBScanMac" "$PWD/dist"
+      - name: Verify release bundle
+        run: bash scripts/verify-release.sh "$PWD/dist"
       - uses: actions/upload-artifact@v4
         with:
-          name: AMURWEB-Scan-macOS-0.8.0-Alpha-Universal
+          name: AMURWEB-Scan-macOS-0.9.0-Alpha-Universal
           path: |
-            dist/AMURWEB-Scan-macOS-0.8.0-Alpha-Universal.dmg
-            dist/AMURWEB-Scan-macOS-0.8.0-Tester-Guide-RU.md
+            dist/AMURWEB-Scan-macOS-0.9.0-Alpha-Universal.dmg
+            dist/AMURWEB-Scan-macOS-0.9.0-Tester-Guide-RU.md
             dist/SHA256SUMS.txt
           if-no-files-found: error
