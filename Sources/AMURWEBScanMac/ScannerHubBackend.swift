@@ -25,7 +25,7 @@ final class ScannerHubBackend: ScannerBackend {
             "device_refresh_completed",
             details: [
                 "hardware": String(result.filter { !$0.isMock }.count),
-                "mock": String(result.filter(\.isMock).count)
+                "mock": String(result.filter { $0.isMock }.count)
             ]
         )
         return result
