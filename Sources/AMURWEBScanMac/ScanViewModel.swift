@@ -36,9 +36,10 @@ final class ScanViewModel: ObservableObject {
         defer { isBusy = false }
         do {
             let discovered = try await backend.listDevices()
-            devices = settings.showTestScanners
-                ? discovered
-                : discovered.filter { !$0.isMock }
+            devices = ScannerVisibilityPolicy.visibleDevices(
+                from: discovered,
+                includeTestDevices: settings.showTestScanners
+            )
 
             if let remembered = settings.lastScannerID,
                devices.contains(where: { $0.id == remembered }) {
@@ -80,7 +81,7 @@ final class ScanViewModel: ObservableObject {
         let panel = NSSavePanel()
         panel.canCreateDirectories = true
         panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "AMURWEB-Scan-Diagnostics-0.7.0.txt"
+        panel.nameFieldStringValue = "AMURWEB-Scan-Diagnostics-\(AppMetadata.version).txt"
         panel.title = settings.t("diagnostics.save")
         panel.prompt = settings.t("diagnostics.saveButton")
 
