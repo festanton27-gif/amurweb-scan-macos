@@ -97,9 +97,9 @@ jobs:
         run: bash scripts/verify-release.sh "$PWD/dist"
       - uses: actions/upload-artifact@v4
         with:
-          name: AMURWEB-Scan-macOS-0.9.0-Alpha-Universal
+          name: AMURWEB-Scan-macOS-0.10.0-Alpha-Universal
           path: |
-            dist/AMURWEB-Scan-macOS-0.9.0-Alpha-Universal.dmg
-            dist/AMURWEB-Scan-macOS-0.9.0-Tester-Guide-RU.md
+            dist/AMURWEB-Scan-macOS-0.10.0-Alpha-Universal.dmg
+            dist/AMURWEB-Scan-macOS-0.10.0-Tester-Guide-RU.md
             dist/SHA256SUMS.txt
           if-no-files-found: error
