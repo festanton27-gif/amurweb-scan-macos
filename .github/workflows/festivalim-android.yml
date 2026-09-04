@@ -80,7 +80,7 @@ jobs:
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.1.1-prototype-apk
+          name: Festivalim-0.1.2-prototype-apk
           path: festivalim/build/Android/*.apk
           if-no-files-found: error
           retention-days: 14
