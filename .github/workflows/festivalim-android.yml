@@ -34,28 +34,24 @@ jobs:
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Create debug keystore and Godot Android settings
+      - name: Restore stable development keystore and Godot Android settings
         shell: bash
         run: |
           mkdir -p "$HOME/.android" "$HOME/.config/godot"
-          keytool -genkeypair -v \
-            -keystore "$HOME/.android/debug.keystore" \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname 'CN=Android Debug,O=Android,C=US'
+          base64 --decode festivalim/ci/dev-keystore.b64 > "$HOME/.android/festivalim-dev.keystore"
+          keytool -list \
+            -keystore "$HOME/.android/festivalim-dev.keystore" \
+            -storepass festivalim-dev \
+            -alias festivalimdev >/dev/null
           cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
           export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           export/android/java_sdk_path = "$JAVA_HOME"
-          export/android/debug_keystore = "$HOME/.android/debug.keystore"
-          export/android/debug_keystore_user = "androiddebugkey"
-          export/android/debug_keystore_pass = "android"
+          export/android/debug_keystore = "$HOME/.android/festivalim-dev.keystore"
+          export/android/debug_keystore_user = "festivalimdev"
+          export/android/debug_keystore_pass = "festivalim-dev"
           EOF
 
       - name: Export Android APK with Godot 4.7.2
