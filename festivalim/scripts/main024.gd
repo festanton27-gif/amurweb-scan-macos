@@ -58,7 +58,7 @@ func _build_game_hud() -> void:
     vibe_bar.show_percentage = false
     hud_layer.add_child(vibe_bar)
 
-    var pause_button := _button(hud_layer, "ПАУЗА", Vector2(590, 247), Vector2(105, 38), _pause_game)
+    var pause_button: Button = _button(hud_layer, "ПАУЗА", Vector2(590, 247), Vector2(105, 38), _pause_game)
     pause_button.add_theme_font_size_override("font_size", 14)
 
     var patch := ColorRect.new()
@@ -70,7 +70,7 @@ func _build_game_hud() -> void:
     _label(hud_layer, VERSION_024, Vector2(0, 1018), Vector2(720, 26), 12, Color(1, 1, 1, 0.35))
 
 func _update_hud() -> void:
-    var vibe := min(VIBE_MAX, int(score / VIBE_SCORE_STEP))
+    var vibe: int = mini(VIBE_MAX, int(score / VIBE_SCORE_STEP))
 
     if state == "game" and vibe >= VIBE_MAX and not festival_boost_used:
         festival_boost_used = true
@@ -120,7 +120,7 @@ func _resume_game() -> void:
     idle_seconds = 0.0
 
 func _finish_level(win: bool) -> void:
-    var rating := _rating_for_result(win)
+    var rating: int = _rating_for_result(win)
     if score > best_score:
         best_score = score
     if rating > best_rating:
