@@ -38,23 +38,34 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat festivalim/ci/icon023.part00 festivalim/ci/icon023.part01 festivalim/ci/icon023.part02 \
-            | tr -d '\r\n' | base64 --decode > festivalim/assets/icon_023.png
           cat festivalim/ci/tiles02395.part00 festivalim/ci/tiles02395.part01 festivalim/ci/tiles02395.part02 \
               festivalim/ci/tiles02395.part03 festivalim/ci/tiles02395.part04 festivalim/ci/tiles02395.part05 \
             | tr -d '\r\n' | base64 --decode > festivalim/assets/tiles_023.webp
-          test -s festivalim/assets/icon_023.png
-          test -s festivalim/assets/tiles_023.webp
-          file festivalim/assets/icon_023.png festivalim/assets/tiles_023.webp
+          python3 -m pip install --disable-pip-version-check --quiet pillow
           python3 - <<'PY'
           from pathlib import Path
-          icon = Path('festivalim/assets/icon_023.png').read_bytes()
+          from PIL import Image
+
+          source = Path('festivalim/assets/icon.jpg')
+          target = Path('festivalim/assets/icon_023.png')
+          with Image.open(source) as image:
+              image = image.convert('RGBA')
+              image.thumbnail((192, 192), Image.Resampling.LANCZOS)
+              canvas = Image.new('RGBA', (192, 192), (7, 28, 28, 255))
+              x = (192 - image.width) // 2
+              y = (192 - image.height) // 2
+              canvas.alpha_composite(image, (x, y))
+              canvas.save(target, format='PNG', optimize=True)
+
+          icon = target.read_bytes()
           tiles = Path('festivalim/assets/tiles_023.webp').read_bytes()
           assert icon.startswith(b'\x89PNG\r\n\x1a\n'), 'launcher icon is not PNG'
           assert tiles.startswith(b'RIFF') and tiles[8:12] == b'WEBP', 'tile atlas is not WEBP'
+          assert len(icon) > 1000, 'launcher icon unexpectedly small'
           assert len(tiles) > 30000, 'tile atlas unexpectedly small'
           print('Festivalim visual assets OK:', len(icon), len(tiles))
           PY
+          file festivalim/assets/icon_023.png festivalim/assets/tiles_023.webp
 
       - name: Restore development signing and Godot Android settings
         shell: bash
