@@ -1,0 +1,2 @@
+Festivalim DEV 0.1.4
+Focus: understandable match-3 mechanics, performance, generated tile pack, safe app icon/splash, first tutorial, hint system, simplified first level.
