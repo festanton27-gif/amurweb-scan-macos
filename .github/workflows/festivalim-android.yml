@@ -3,7 +3,7 @@ name: Festivalim Android Prototype
 on:
   push:
     branches:
-      - 'festivalim-match3-0.2.1'
+      - 'festivalim-match3-0.2.2'
     paths:
       - 'festivalim/**'
       - '.github/workflows/festivalim-android.yml'
@@ -34,24 +34,19 @@ jobs:
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Restore Festivalim visual assets
+      - name: Restore Festivalim launcher icon
         shell: bash
         run: |
-          cat festivalim/ci/tiles021.part0 festivalim/ci/tiles021.part1 festivalim/ci/tiles021.part2 festivalim/ci/tiles021.part3 festivalim/ci/tiles021.part4 festivalim/ci/tiles021.part5 | base64 --decode > festivalim/assets/tiles_021.jpg
           base64 --decode festivalim/ci/icon021.b64 > festivalim/assets/icon_021.jpg
-          test -s festivalim/assets/tiles_021.jpg
           test -s festivalim/assets/icon_021.jpg
-          file festivalim/assets/tiles_021.jpg festivalim/assets/icon_021.jpg
+          file festivalim/assets/icon_021.jpg
 
-      - name: Restore stable development keystore and Godot Android settings
+      - name: Restore development signing and Godot Android settings
         shell: bash
         run: |
           mkdir -p "$HOME/.android" "$HOME/.config/godot"
           base64 --decode festivalim/ci/dev-keystore.b64 > "$HOME/.android/festivalim-dev.keystore"
-          keytool -list \
-            -keystore "$HOME/.android/festivalim-dev.keystore" \
-            -storepass festivalim-dev \
-            -alias festivalimdev >/dev/null
+          keytool -list -keystore "$HOME/.android/festivalim-dev.keystore" -storepass festivalim-dev -alias festivalimdev >/dev/null
           cat > "$HOME/.config/godot/editor_settings-4.7.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
 
@@ -76,16 +71,28 @@ jobs:
           presets_to_export: Android
           verbose: true
 
-      - name: Show APK files
-        if: always()
+      - name: Validate Godot project
         shell: bash
         run: |
-          find . -type f -name '*.apk' -print || true
+          set +e
+          GODOT=$(find "$HOME/.local/share/godot/godot_executable" -maxdepth 1 -type f -name 'Godot*' | head -n 1)
+          "$GODOT" --headless --path festivalim --editor --quit 2>&1 | tee /tmp/festivalim-validation.log
+          CODE=${PIPESTATUS[0]}
+          set -e
+          if grep -E 'SCRIPT ERROR|Parse Error|Error importing|Failed loading resource|Could not preload resource' /tmp/festivalim-validation.log; then
+            exit 1
+          fi
+          test "$CODE" -eq 0
+
+      - name: Verify APK exists
+        shell: bash
+        run: |
+          test -s festivalim/build/Android/Festivalim-0.2.2-DEV.apk
 
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.2.1-DEV-apk
-          path: festivalim/build/Android/*.apk
+          name: Festivalim-0.2.2-DEV-apk
+          path: festivalim/build/Android/Festivalim-0.2.2-DEV.apk
           if-no-files-found: error
           retention-days: 14
