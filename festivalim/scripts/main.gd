@@ -5,6 +5,7 @@ const COLS := 7
 const TILE_TYPES := 6
 const START_MOVES := 20
 const HEART_GOAL := 15
+const SWIPE_THRESHOLD := 28.0
 
 var board: Array = []
 var buttons: Array = []
@@ -14,6 +15,11 @@ var hearts := 0
 var score := 0
 var busy := false
 
+var pointer_start_cell := Vector2i(-1, -1)
+var pointer_start_pos := Vector2.ZERO
+var pointer_dragged := false
+var mouse_down := false
+
 var moves_label: Label
 var score_label: Label
 var goal_label: Label
@@ -21,6 +27,9 @@ var status_label: Label
 var party_bar: ProgressBar
 var grid: GridContainer
 var restart_button: Button
+
+var tile_style: StyleBoxFlat
+var tile_selected_style: StyleBoxFlat
 
 const ICONS := ["♥", "♫", "☺", "★", "●", "✦"]
 const NAMES := ["Знакомство", "Музыка", "Юмор", "Фото", "Напитки", "Танцы"]
@@ -30,22 +39,40 @@ const COLORS := [
 ]
 
 func _ready() -> void:
+    _make_tile_styles()
     _build_ui()
     _new_game()
+
+func _make_tile_styles() -> void:
+    tile_style = StyleBoxFlat.new()
+    tile_style.bg_color = Color("18213b")
+    tile_style.border_color = Color("2b385d")
+    tile_style.set_border_width_all(2)
+    tile_style.corner_radius_top_left = 14
+    tile_style.corner_radius_top_right = 14
+    tile_style.corner_radius_bottom_left = 14
+    tile_style.corner_radius_bottom_right = 14
+
+    tile_selected_style = tile_style.duplicate()
+    tile_selected_style.bg_color = Color("2a3150")
+    tile_selected_style.border_color = Color("ffd166")
+    tile_selected_style.set_border_width_all(5)
 
 func _build_ui() -> void:
     var bg := ColorRect.new()
     bg.color = Color("091126")
     bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(bg)
 
     var root := VBoxContainer.new()
     root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    root.add_theme_constant_override("separation", 12)
+    root.add_theme_constant_override("separation", 10)
     root.offset_left = 18
     root.offset_right = -18
-    root.offset_top = 24
-    root.offset_bottom = -20
+    root.offset_top = 22
+    root.offset_bottom = -18
+    root.mouse_filter = Control.MOUSE_FILTER_PASS
     add_child(root)
 
     var title := Label.new()
@@ -101,11 +128,20 @@ func _build_ui() -> void:
     goal_label.add_theme_font_size_override("font_size", 16)
     mission_box.add_child(goal_label)
 
+    status_label = Label.new()
+    status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    status_label.add_theme_font_size_override("font_size", 16)
+    status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    status_label.custom_minimum_size = Vector2(0, 46)
+    root.add_child(status_label)
+
     grid = GridContainer.new()
     grid.columns = COLS
     grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
     grid.add_theme_constant_override("h_separation", 5)
     grid.add_theme_constant_override("v_separation", 5)
+    grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(grid)
 
     var footer := HBoxContainer.new()
@@ -126,75 +162,211 @@ func _build_ui() -> void:
     restart_button.pressed.connect(_new_game)
     footer.add_child(restart_button)
 
-    status_label = Label.new()
-    status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    status_label.add_theme_font_size_override("font_size", 16)
-    status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    root.add_child(status_label)
+func _input(event: InputEvent) -> void:
+    if event is InputEventScreenTouch:
+        var touch := event as InputEventScreenTouch
+        if touch.pressed:
+            _pointer_press(touch.position)
+        else:
+            _pointer_release(touch.position)
+        return
+
+    if event is InputEventScreenDrag:
+        var drag := event as InputEventScreenDrag
+        _pointer_drag(drag.position)
+        return
+
+    if event is InputEventMouseButton:
+        var mouse_button := event as InputEventMouseButton
+        if mouse_button.device == InputEvent.DEVICE_ID_EMULATION:
+            return
+        if mouse_button.button_index == MOUSE_BUTTON_LEFT:
+            mouse_down = mouse_button.pressed
+            if mouse_button.pressed:
+                _pointer_press(mouse_button.position)
+            else:
+                _pointer_release(mouse_button.position)
+        return
+
+    if event is InputEventMouseMotion and mouse_down:
+        var mouse_motion := event as InputEventMouseMotion
+        if mouse_motion.device != InputEvent.DEVICE_ID_EMULATION:
+            _pointer_drag(mouse_motion.position)
+
+func _pointer_press(position: Vector2) -> void:
+    if busy or moves <= 0 or hearts >= HEART_GOAL:
+        return
+    pointer_start_cell = _cell_at_position(position)
+    pointer_start_pos = position
+    pointer_dragged = false
+
+func _pointer_drag(position: Vector2) -> void:
+    if busy or pointer_dragged or pointer_start_cell.x < 0:
+        return
+
+    var delta := position - pointer_start_pos
+    if delta.length() < SWIPE_THRESHOLD:
+        return
+
+    var direction := Vector2i.ZERO
+    if abs(delta.x) >= abs(delta.y):
+        direction.x = 1 if delta.x > 0 else -1
+    else:
+        direction.y = 1 if delta.y > 0 else -1
+
+    var target := pointer_start_cell + direction
+    if not _is_valid_cell(target):
+        return
+
+    pointer_dragged = true
+    selected = Vector2i(-1, -1)
+    status_label.text = "Свайп принят — меняем фишки…"
+    _attempt_swap(pointer_start_cell, target)
+
+func _pointer_release(position: Vector2) -> void:
+    if pointer_start_cell.x < 0:
+        return
+
+    if not pointer_dragged:
+        var released_cell := _cell_at_position(position)
+        if released_cell.x < 0:
+            released_cell = pointer_start_cell
+        _handle_tap(released_cell)
+
+    pointer_start_cell = Vector2i(-1, -1)
+    pointer_dragged = false
+
+func _cell_at_position(position: Vector2) -> Vector2i:
+    for r in ROWS:
+        for c in COLS:
+            if r >= buttons.size() or c >= buttons[r].size():
+                continue
+            var button: Button = buttons[r][c]
+            if Rect2(button.global_position, button.size).has_point(position):
+                return Vector2i(c, r)
+    return Vector2i(-1, -1)
+
+func _is_valid_cell(cell: Vector2i) -> bool:
+    return cell.x >= 0 and cell.x < COLS and cell.y >= 0 and cell.y < ROWS
+
+func _handle_tap(pos: Vector2i) -> void:
+    if busy or not _is_valid_cell(pos) or moves <= 0 or hearts >= HEART_GOAL:
+        return
+
+    if selected.x < 0:
+        selected = pos
+        status_label.text = "Выбрана «%s». Теперь тапни соседнюю фишку или свайпни." % NAMES[board[pos.y][pos.x]]
+        _refresh()
+        return
+
+    if selected == pos:
+        selected = Vector2i(-1, -1)
+        status_label.text = "Выбор снят. Выбери фишку или сделай свайп."
+        _refresh()
+        return
+
+    if abs(selected.x - pos.x) + abs(selected.y - pos.y) != 1:
+        selected = pos
+        status_label.text = "Новая фишка выбрана. Для хода нужна соседняя клетка."
+        _refresh()
+        return
+
+    var first := selected
+    selected = Vector2i(-1, -1)
+    _attempt_swap(first, pos)
 
 func _new_game() -> void:
     busy = false
     selected = Vector2i(-1, -1)
+    pointer_start_cell = Vector2i(-1, -1)
+    pointer_dragged = false
     moves = START_MOVES
     hearts = 0
     score = 0
     board.clear()
     buttons.clear()
+
     for child in grid.get_children():
+        grid.remove_child(child)
         child.queue_free()
 
-    for r in ROWS:
-        var row: Array[int] = []
-        for c in COLS:
-            var t := randi_range(0, TILE_TYPES - 1)
-            while (c >= 2 and row[c - 1] == t and row[c - 2] == t) or (r >= 2 and board[r - 1][c] == t and board[r - 2][c] == t):
-                t = randi_range(0, TILE_TYPES - 1)
-            row.append(t)
-        board.append(row)
+    _generate_playable_board()
 
     for r in ROWS:
         var brow: Array[Button] = []
         for c in COLS:
-            var b := Button.new()
-            b.custom_minimum_size = Vector2(82, 82)
-            b.add_theme_font_size_override("font_size", 34)
-            b.pressed.connect(_on_tile_pressed.bind(r, c))
-            grid.add_child(b)
-            brow.append(b)
+            var button := Button.new()
+            button.custom_minimum_size = Vector2(82, 82)
+            button.focus_mode = Control.FOCUS_NONE
+            button.mouse_filter = Control.MOUSE_FILTER_IGNORE
+            button.add_theme_font_size_override("font_size", 35)
+            button.add_theme_stylebox_override("normal", tile_style)
+            button.add_theme_stylebox_override("hover", tile_style)
+            button.add_theme_stylebox_override("pressed", tile_selected_style)
+            grid.add_child(button)
+            brow.append(button)
         buttons.append(brow)
-    status_label.text = "Собери три одинаковых символа. Цель — помочь Романтику собрать сердца."
+
+    status_label.text = "Управление: тапни две соседние фишки или свайпни фишку в сторону."
     _refresh()
 
-func _on_tile_pressed(r: int, c: int) -> void:
-    if busy or moves <= 0 or hearts >= HEART_GOAL:
-        return
-    var pos := Vector2i(c, r)
-    if selected.x < 0:
-        selected = pos
-        _refresh()
-        return
-    if selected == pos:
-        selected = Vector2i(-1, -1)
-        _refresh()
-        return
-    if abs(selected.x - pos.x) + abs(selected.y - pos.y) != 1:
-        selected = pos
-        _refresh()
+func _generate_playable_board() -> void:
+    var attempts := 0
+    while true:
+        attempts += 1
+        board.clear()
+        for r in ROWS:
+            var row: Array[int] = []
+            for c in COLS:
+                var tile := randi_range(0, TILE_TYPES - 1)
+                while (c >= 2 and row[c - 1] == tile and row[c - 2] == tile) or (r >= 2 and board[r - 1][c] == tile and board[r - 2][c] == tile):
+                    tile = randi_range(0, TILE_TYPES - 1)
+                row.append(tile)
+            board.append(row)
+        if _board_has_move() or attempts >= 20:
+            return
+
+func _board_has_move() -> bool:
+    for r in ROWS:
+        for c in COLS:
+            var here := Vector2i(c, r)
+            if c + 1 < COLS:
+                var right := Vector2i(c + 1, r)
+                _swap(here, right)
+                var right_works := not _find_matches().is_empty()
+                _swap(here, right)
+                if right_works:
+                    return true
+            if r + 1 < ROWS:
+                var down := Vector2i(c, r + 1)
+                _swap(here, down)
+                var down_works := not _find_matches().is_empty()
+                _swap(here, down)
+                if down_works:
+                    return true
+    return false
+
+func _attempt_swap(first: Vector2i, second: Vector2i) -> void:
+    if busy or not _is_valid_cell(first) or not _is_valid_cell(second):
         return
 
-    var a := selected
-    var b := pos
-    selected = Vector2i(-1, -1)
-    _swap(a, b)
+    busy = true
+    _swap(first, second)
+    status_label.text = "Проверяем комбинацию…"
+    _refresh()
+    await get_tree().create_timer(0.18).timeout
+
     var matches := _find_matches()
     if matches.is_empty():
-        _swap(a, b)
-        status_label.text = "Комбинации нет. Попробуй соседнюю фишку."
+        _swap(first, second)
+        status_label.text = "Комбинации нет — возвращаю фишки назад."
         _refresh()
+        await get_tree().create_timer(0.16).timeout
+        busy = false
         return
 
     moves -= 1
-    status_label.text = "Движ пошёл!"
+    status_label.text = "Есть комбинация! Движ пошёл."
     await _resolve_board()
 
 func _swap(a: Vector2i, b: Vector2i) -> void:
@@ -229,18 +401,23 @@ func _resolve_board() -> void:
         if matches.is_empty():
             break
         var heart_count := 0
-        for p in matches:
-            if board[p.y][p.x] == 0:
+        for pos in matches:
+            if board[pos.y][pos.x] == 0:
                 heart_count += 1
-            board[p.y][p.x] = -1
+            board[pos.y][pos.x] = -1
         hearts += heart_count
         score += matches.size() * 100
         party_bar.value = min(100, party_bar.value + matches.size() * 1.7)
         _refresh()
-        await get_tree().create_timer(0.14).timeout
+        await get_tree().create_timer(0.18).timeout
         _collapse()
         _refresh()
-        await get_tree().create_timer(0.12).timeout
+        await get_tree().create_timer(0.16).timeout
+
+    if moves > 0 and hearts < HEART_GOAL and not _board_has_move():
+        _generate_playable_board()
+        status_label.text = "Ходов на поле не осталось — автоматически перемешал фишки."
+
     busy = false
     _refresh()
     _check_end()
@@ -262,25 +439,34 @@ func _check_end() -> void:
         party_bar.value = min(100, party_bar.value + 15)
     elif moves <= 0:
         status_label.text = "Ходы закончились. Романтик опять сказал: «В следующий раз точно подойду»."
+    else:
+        status_label.text = "Твой ход: тап-тап по соседним фишкам или свайп."
 
 func _refresh() -> void:
     moves_label.text = "Ходы: %d" % moves
     score_label.text = "Очки: %d" % score
     goal_label.text = "Собери ♥  %d / %d" % [min(hearts, HEART_GOAL), HEART_GOAL]
+
     for r in ROWS:
         for c in COLS:
             if r >= buttons.size() or c >= buttons[r].size():
                 continue
-            var b: Button = buttons[r][c]
-            var t: int = board[r][c]
-            if t < 0:
-                b.text = ""
-                b.modulate = Color(1, 1, 1, 0.25)
+            var button: Button = buttons[r][c]
+            var tile: int = board[r][c]
+            if tile < 0:
+                button.text = ""
+                button.add_theme_stylebox_override("normal", tile_style)
+                button.modulate = Color(1, 1, 1, 0.25)
             else:
-                b.text = ICONS[t]
-                b.tooltip_text = NAMES[t]
-                b.modulate = COLORS[t]
-            if selected == Vector2i(c, r):
-                b.scale = Vector2(0.9, 0.9)
-            else:
-                b.scale = Vector2.ONE
+                button.modulate = Color.WHITE
+                button.text = ICONS[tile]
+                button.tooltip_text = NAMES[tile]
+                button.add_theme_color_override("font_color", COLORS[tile])
+                button.add_theme_color_override("font_hover_color", COLORS[tile])
+                button.add_theme_color_override("font_pressed_color", COLORS[tile])
+                if selected == Vector2i(c, r):
+                    button.add_theme_stylebox_override("normal", tile_selected_style)
+                    button.add_theme_font_size_override("font_size", 43)
+                else:
+                    button.add_theme_stylebox_override("normal", tile_style)
+                    button.add_theme_font_size_override("font_size", 35)
