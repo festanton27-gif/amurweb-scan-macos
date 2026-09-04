@@ -3,7 +3,7 @@ name: Festivalim Android Prototype
 on:
   push:
     branches:
-      - 'festivalim-match3-0.2.2'
+      - 'festivalim-match3-0.2.3'
     paths:
       - 'festivalim/**'
       - '.github/workflows/festivalim-android.yml'
@@ -34,12 +34,27 @@ jobs:
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Restore Festivalim launcher icon
+      - name: Restore Festivalim 0.2.3 visual assets
         shell: bash
         run: |
-          base64 --decode festivalim/ci/icon021.b64 > festivalim/assets/icon_021.jpg
-          test -s festivalim/assets/icon_021.jpg
-          file festivalim/assets/icon_021.jpg
+          set -euo pipefail
+          cat festivalim/ci/icon023.part00 festivalim/ci/icon023.part01 festivalim/ci/icon023.part02 \
+            | tr -d '\r\n' | base64 --decode > festivalim/assets/icon_023.png
+          cat festivalim/ci/tiles02395.part00 festivalim/ci/tiles02395.part01 festivalim/ci/tiles02395.part02 \
+              festivalim/ci/tiles02395.part03 festivalim/ci/tiles02395.part04 festivalim/ci/tiles02395.part05 \
+            | tr -d '\r\n' | base64 --decode > festivalim/assets/tiles_023.webp
+          test -s festivalim/assets/icon_023.png
+          test -s festivalim/assets/tiles_023.webp
+          file festivalim/assets/icon_023.png festivalim/assets/tiles_023.webp
+          python3 - <<'PY'
+          from pathlib import Path
+          icon = Path('festivalim/assets/icon_023.png').read_bytes()
+          tiles = Path('festivalim/assets/tiles_023.webp').read_bytes()
+          assert icon.startswith(b'\x89PNG\r\n\x1a\n'), 'launcher icon is not PNG'
+          assert tiles.startswith(b'RIFF') and tiles[8:12] == b'WEBP', 'tile atlas is not WEBP'
+          assert len(tiles) > 30000, 'tile atlas unexpectedly small'
+          print('Festivalim visual assets OK:', len(icon), len(tiles))
+          PY
 
       - name: Restore development signing and Godot Android settings
         shell: bash
@@ -87,12 +102,12 @@ jobs:
       - name: Verify APK exists
         shell: bash
         run: |
-          test -s festivalim/build/Android/Festivalim-0.2.2-DEV.apk
+          test -s festivalim/build/Android/Festivalim-0.2.3-DEV.apk
 
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.2.2-DEV-apk
-          path: festivalim/build/Android/Festivalim-0.2.2-DEV.apk
+          name: Festivalim-0.2.3-DEV-apk
+          path: festivalim/build/Android/Festivalim-0.2.3-DEV.apk
           if-no-files-found: error
           retention-days: 14
