@@ -3,7 +3,7 @@ name: Festivalim Android Prototype
 on:
   push:
     branches:
-      - 'festivalim-match3-0.2.0'
+      - 'festivalim-match3-0.2.1'
     paths:
       - 'festivalim/**'
       - '.github/workflows/festivalim-android.yml'
@@ -33,6 +33,15 @@ jobs:
         shell: bash
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
+
+      - name: Restore Festivalim visual assets
+        shell: bash
+        run: |
+          cat festivalim/ci/tiles021.part0 festivalim/ci/tiles021.part1 festivalim/ci/tiles021.part2 festivalim/ci/tiles021.part3 festivalim/ci/tiles021.part4 festivalim/ci/tiles021.part5 | base64 --decode > festivalim/assets/tiles_021.jpg
+          base64 --decode festivalim/ci/icon021.b64 > festivalim/assets/icon_021.jpg
+          test -s festivalim/assets/tiles_021.jpg
+          test -s festivalim/assets/icon_021.jpg
+          file festivalim/assets/tiles_021.jpg festivalim/assets/icon_021.jpg
 
       - name: Restore stable development keystore and Godot Android settings
         shell: bash
@@ -76,7 +85,7 @@ jobs:
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.2.0-DEV-apk
+          name: Festivalim-0.2.1-DEV-apk
           path: festivalim/build/Android/*.apk
           if-no-files-found: error
           retention-days: 14
