@@ -3,7 +3,7 @@ name: Festivalim Android Prototype
 on:
   push:
     branches:
-      - 'festivalim-match3-0.2.6-final'
+      - 'festivalim-match3-0.2.7'
     paths:
       - 'festivalim/**'
       - '.github/workflows/festivalim-android.yml'
@@ -76,7 +76,7 @@ jobs:
               im.verify()
           with Image.open('festivalim/assets/icon_023.png') as im:
               im.verify()
-          print('Festivalim 0.2.6 assets restored and verified')
+          print('Festivalim 0.2.7 assets restored and verified')
           PY
 
       - name: Restore development signing and Godot Android settings
@@ -125,12 +125,12 @@ jobs:
       - name: Verify APK exists
         shell: bash
         run: |
-          test -s festivalim/build/Android/Festivalim-0.2.6-DEV.apk
+          test -s festivalim/build/Android/Festivalim-0.2.7-DEV.apk
 
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.2.6-DEV-apk
-          path: festivalim/build/Android/Festivalim-0.2.6-DEV.apk
+          name: Festivalim-0.2.7-DEV-apk
+          path: festivalim/build/Android/Festivalim-0.2.7-DEV.apk
           if-no-files-found: error
           retention-days: 14
