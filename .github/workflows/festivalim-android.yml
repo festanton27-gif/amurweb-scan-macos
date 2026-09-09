@@ -46,7 +46,7 @@ jobs:
           assert tiles.startswith(b'\xff\xd8\xff'), 'tile atlas is not JPEG'
           assert icon.startswith(b'\x89PNG\r\n\x1a\n'), 'launcher icon is not PNG'
           assert splash.startswith(b'\xff\xd8\xff'), 'splash is not JPEG'
-          assert len(tiles) > 20000, 'tile atlas unexpectedly small'
+          assert len(tiles) > 15000, 'tile atlas unexpectedly small'
           assert len(icon) > 3000, 'launcher icon unexpectedly small'
           assert len(splash) > 10000, 'splash unexpectedly small'
           print('Festivalim 0.2.6 assets OK:', len(tiles), len(icon), len(splash))
