@@ -1,0 +1,1 @@
+Festivalim 0.2.6 binary assets are committed directly as Git blobs. CI must not reconstruct them from text fragments.
