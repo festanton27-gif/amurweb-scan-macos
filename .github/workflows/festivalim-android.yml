@@ -34,24 +34,30 @@ jobs:
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Verify Festivalim 0.2.6 visual assets
+      - name: Restore compatibility assets
         shell: bash
         run: |
           set -euo pipefail
+          cat festivalim/ci/tiles02395.part00 festivalim/ci/tiles02395.part01 festivalim/ci/tiles02395.part02 \
+              festivalim/ci/tiles02395.part03 festivalim/ci/tiles02395.part04 festivalim/ci/tiles02395.part05 \
+            | tr -d '\r\n' | base64 --decode > festivalim/assets/tiles_023.webp
+          python3 -m pip install --disable-pip-version-check --quiet pillow
           python3 - <<'PY'
           from pathlib import Path
-          tiles = Path('festivalim/assets/tiles_026.jpg').read_bytes()
-          icon = Path('festivalim/assets/icon_026.png').read_bytes()
-          splash = Path('festivalim/assets/splash_026.jpg').read_bytes()
-          assert tiles.startswith(b'\xff\xd8\xff'), 'tile atlas is not JPEG'
-          assert icon.startswith(b'\x89PNG\r\n\x1a\n'), 'launcher icon is not PNG'
-          assert splash.startswith(b'\xff\xd8\xff'), 'splash is not JPEG'
-          assert len(tiles) > 15000, 'tile atlas unexpectedly small'
-          assert len(icon) > 3000, 'launcher icon unexpectedly small'
-          assert len(splash) > 10000, 'splash unexpectedly small'
-          print('Festivalim 0.2.6 assets OK:', len(tiles), len(icon), len(splash))
+          from PIL import Image
+          source = Path('festivalim/assets/icon.jpg')
+          target = Path('festivalim/assets/icon_023.png')
+          with Image.open(source) as image:
+              image = image.convert('RGBA')
+              image.thumbnail((192,192), Image.Resampling.LANCZOS)
+              canvas = Image.new('RGBA',(192,192),(7,28,28,255))
+              canvas.alpha_composite(image,((192-image.width)//2,(192-image.height)//2))
+              canvas.save(target,'PNG',optimize=True)
+          for p in ['festivalim/assets/tiles_023.webp','festivalim/assets/icon_023.png','festivalim/assets/icon_026.png','festivalim/assets/splash_026.jpg']:
+              with Image.open(p) as im:
+                  im.verify()
+          print('Festivalim compatibility assets OK')
           PY
-          file festivalim/assets/tiles_026.jpg festivalim/assets/icon_026.png festivalim/assets/splash_026.jpg
 
       - name: Restore development signing and Godot Android settings
         shell: bash
