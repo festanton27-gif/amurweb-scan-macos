@@ -1,7 +1,7 @@
 extends "res://scripts/main027.gd"
 
 const Tile028 = preload("res://scripts/tile028.gd")
-const SPLASH_028: Texture2D = preload("res://assets/splash_028.png")
+const SPLASH_028: Texture2D = preload("res://assets/splash_028.jpg")
 const VERSION_028 := "DEV 0.2.8"
 
 func _show_startup_splash() -> void:
