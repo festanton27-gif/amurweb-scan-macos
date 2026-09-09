@@ -3,7 +3,7 @@ name: Festivalim Android Prototype
 on:
   push:
     branches:
-      - 'festivalim-match3-0.2.3'
+      - 'festivalim-match3-0.2.5'
     paths:
       - 'festivalim/**'
       - '.github/workflows/festivalim-android.yml'
@@ -34,7 +34,7 @@ jobs:
         run: |
           sdkmanager 'platform-tools' 'build-tools;36.1.0' 'platforms;android-36' 'cmdline-tools;latest' 'ndk;29.0.14206865' 'cmake;3.22.1'
 
-      - name: Restore Festivalim 0.2.3 visual assets
+      - name: Restore Festivalim visual assets
         shell: bash
         run: |
           set -euo pipefail
@@ -113,12 +113,12 @@ jobs:
       - name: Verify APK exists
         shell: bash
         run: |
-          test -s festivalim/build/Android/Festivalim-0.2.3-DEV.apk
+          test -s festivalim/build/Android/Festivalim-0.2.5-DEV.apk
 
       - name: Upload Festivalim APK
         uses: actions/upload-artifact@v4
         with:
-          name: Festivalim-0.2.3-DEV-apk
-          path: festivalim/build/Android/Festivalim-0.2.3-DEV.apk
+          name: Festivalim-0.2.5-DEV-apk
+          path: festivalim/build/Android/Festivalim-0.2.5-DEV.apk
           if-no-files-found: error
           retention-days: 14
